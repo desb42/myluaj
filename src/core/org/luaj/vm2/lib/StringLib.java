@@ -549,6 +549,7 @@ public class StringLib extends TwoArgFunction {
 //				if (res_old != res) {
 //					System.out.println("oops");
 //				}
+				soffset = ms_new.Stretch();
 				if ( res >=0 ) {
 					int soff = soffset;
 					int soffset_adj = res == soffset ? 1 : 0;
@@ -621,7 +622,7 @@ public class StringLib extends TwoArgFunction {
 //		Buffer lbuf_old = new Buffer( srclen );
 //		MatchState ms_old = new MatchState( args, src, p );
 		Buffer lbuf = null;
-                int start = 0;
+		int start = 0;
 		Str_find_mgr__lua find_mgr = new Str_find_mgr__lua(src, p, 0, false, false);
 		Match_state ms_new = new Match_state(find_mgr);
 
