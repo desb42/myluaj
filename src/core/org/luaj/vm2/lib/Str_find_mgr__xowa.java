@@ -47,9 +47,10 @@ public class Str_find_mgr__xowa extends Str_find_mgr {
 			// * XOWA uses LUAJ as a shim for Scribunto PHP Regex (since Java Regex cannot support balanced parentheses); See Scrib_pattern_matcher__xowa
 			// * So, subtract -1 since Scribunto will need base-0 indexes (remember, it would ordinarily call PHP Regex which is base-0, not Lua Pattern Matching which is base-1)
 			int capture_bgn = val - Str_find_mgr.Base_1;
-			int capture_end = val < this.src_len ? val : this.src_len;
+			//int capture_end = val < this.src_len ? val : this.src_len;
+			int capture_end = capture_bgn; // zero length 20211120
 			captures_ary[capture_idx++] = capture_bgn;
-			captures_ary[capture_idx++] = capture_end;
+			captures_ary[capture_idx++] = -2;
 		}
 		return null;
 	}
@@ -68,7 +69,8 @@ public class Str_find_mgr__xowa extends Str_find_mgr {
 		return null;
 	}
 	@Override protected Varargs Result__make__match() {
-		return null;
+		//return captures_ary == null ? LuaValue.NONE : LuaValue.varargsOf(captures_ary);
+		return null; //?? why null 20211123
 	}
 	@Override protected Varargs Result__make__nil() {
 		this.bgn = -1;

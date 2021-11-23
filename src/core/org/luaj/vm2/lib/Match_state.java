@@ -45,54 +45,77 @@ public class Match_state {
 				first_pos++;
 				first_char = pat.Get_data( first_pos );
 			}
-			// % checks %(%)%.%%%+%-%*%?%[%^%$%]
-			if (first_char == '%') {
-				int second_char = pat.Get_data( first_pos + 1 );
-				switch (second_char) {
-					case '(': case ')': case '.': case '"':
-					case '%': case '+': case '-':
-					case '*': case '?': case '[':
-					case '^': case '$': case ']':
-						if (first_pos + pat_len > 2) {
-							int third_char = pat.Get_data( first_pos + 2 );
-							if (third_char != '?' && third_char != '*' && third_char != '-') {
-								text_first = true;
-								first_char = second_char;
-							}
-						}
-						else {
-							text_first = true;
-							first_char = second_char;
-						}
+			switch (first_char) {
+				case '%':
+					int second_char = pat.Get_data( first_pos + 1 );
+					//if (second_char == 'b' || second_char == 'f')
+					//	break;
+					if (second_char == 'b') {
+						first_char = pat.Get_data( first_pos + 2 );
+						text_first = true;
 						break;
-				}
-			}
-			else if (first_char == '[') {
-				int ep = classend(first_pos);
-				if (ep < pat_len) {
-					int second_char = pat.Get_data( ep );
-					if (second_char != '?' && second_char != '*' && second_char != '-') {
+					}
+					if (second_char == 'f')
+						break;
+					if (first_pos + 2 < pat_len) {
+						int third_char = pat.Get_data( first_pos + 2 );
+						if (third_char != '?' && third_char != '*' && third_char != '-') {
+							text_first = true;
+						}
+					}
+					else {
+						text_first = true;
+					}
+					switch (second_char) {
+						case '(': case ')': case '.': case '"': // % checks %(%)%.%%%+%-%*%?%[%^%$%]
+						case '%': case '+': case '-':
+						case '*': case '?': case '[':
+						case '^': case '$': case ']':
+							first_char = second_char;
+							break;
+						default:
+							first_char = 2;
+							break;
+					}
+					break;
+				case '$':
+					if (first_pos + 1 == pat_len) { // is the `$' the last char in pat?
+						first_char = 3;
+						text_first = true;
+					}
+					else {
+						second_char = pat.Get_data( first_pos + 1 );
+						if (second_char != '?' && second_char != '*' && second_char != '-')
+							text_first = true;
+					}
+					break;
+				case '[':
+					int ep = classend(first_pos);
+					if (ep < pat_len) {
+						second_char = pat.Get_data( ep );
+						if (second_char != '?' && second_char != '*' && second_char != '-') {
+							text_first = true;
+							first_char = 1;
+						}
+					}
+					else {
 						text_first = true;
 						first_char = 1;
 					}
-				}
-				else {
-					text_first = true;
-					first_char = 1;
-				}
-			}
-			// ^$[]().*?+
-			else if (first_char != '^' && first_char != '$' && first_char != '[' && first_char != ']'
-			    && first_char != '(' && first_char != ')' && first_char != '.' && first_char != '*' 
-			    && first_char != '?' && first_char != '+') {
-				// need to check any following grouping char
-				if (first_pos + pat_len > 1) {
-					int second_char = pat.Get_data( first_pos + 1 );
-					if (second_char != '?' && second_char != '*' && second_char != '-')
+					break;
+				case '^': case ']':
+				case '(': case ')': case '.': case '*':
+				case '?': case '+':
+					break;
+				default:
+					if (first_pos + 1 < pat_len) {
+						second_char = pat.Get_data( first_pos + 1 );
+						if (second_char != '?' && second_char != '*' && second_char != '-')
+							text_first = true;
+					}
+					else
 						text_first = true;
-				}
-				else
-					text_first = true;
+					break;
 			}
 		}
 	}
@@ -223,9 +246,9 @@ public class Match_state {
 			int capture_bgn = capture_bgns[i];
 			if (capture_len == CAP_POSITION) {
 				// assert register_capture is true; refactor code to remove register_capture from Capture__position after next enwiki build
-				if (!register_capture) {
-					throw new LuaError("LUAJ_XOWA:register capture should always be true");
-				}
+//				if (!register_capture) {
+//					throw new LuaError("LUAJ_XOWA:register capture should always be true");
+//				}
 				// NOTE: +1 to normalize capture to base1; ISSUE#:726; DATE:2020-05-17;
 				// REF.LUA: https://www.lua.org/source/5.1/lstrlib.c.html
 				//   if (l == CAP_POSITION)
@@ -439,25 +462,40 @@ public class Match_state {
 	public int match(int src_pos, int pat_pos) {
 		this.stretch = src_pos;
 		if (pat_pos == 0 && text_first) {
-			if (first_char == 1) {
-				int ep = classend(first_pos) - 1;
-				int local_pat_pos = first_pos;
-				while (src_pos < src_len) {
-					if (matchbracketclass(src.Get_data(src_pos), local_pat_pos, ep)) {
-						break;
+			switch (first_char) {
+				case 1: // [...] in first pos
+					int ep = classend(first_pos) - 1;
+					int local_pat_pos = first_pos;
+					while (src_pos < src_len) {
+						if (matchbracketclass(src.Get_data(src_pos), local_pat_pos, ep)) {
+							break;
+						}
+						else
+							src_pos++;
 					}
-					else
-						src_pos++;
-				}
-			}
-			else {
-				while (src_pos < src_len) {
-					if (src.Get_data(src_pos) == first_char) {
-						break;
+					break;
+				case 2: // %[a...] in first position
+					int local_pat = pat.Get_data(first_pos + 1);
+					while (src_pos < src_len) {
+						if (char_class_mgr.Match_class(src.Get_data(src_pos), local_pat)) {
+							break;
+						}
+						else
+							src_pos++;
 					}
-					else
-						src_pos++;
-				}
+					break;
+				case 3: // $ as the only character
+					src_pos = src.Len_in_data();
+					break;
+				default:
+					while (src_pos < src_len) {
+						if (src.Get_data(src_pos) == first_char) {
+							break;
+						}
+						else
+							src_pos++;
+					}
+					break;
 			}
 			this.stretch = src_pos;
 			//if (src_pos == src_len) {
@@ -466,7 +504,7 @@ public class Match_state {
 		}
 		return i_match(src_pos, pat_pos);
 	}
-	public int i_match(int src_pos, int pat_pos) {
+	private int i_match(int src_pos, int pat_pos) {
 		while (true) {
 			// Check if we are at the end of the pat - 
 			// equivalent to the '\0' case in the C version, but our pat

@@ -612,7 +612,7 @@ public class StringLib extends TwoArgFunction {
 		if (srclen == 0) return varargsOf(src, LuaValue.ZERO); // exit early
 		LuaString p = args.checkstring( 2 );
                 //if (p.m_bytes.length > 3 && p.m_bytes[0] == '[' && p.m_bytes[1] == '%' && p.m_bytes[2] == 'z') { // [%z
-                System.out.println("b p:" + p);
+//                System.out.println("b p:" + p);
                 //}
 		LuaValue repl = args.arg( 3 );
 		int max_s = args.optint( 4, srclen + 1 );
@@ -644,8 +644,14 @@ public class StringLib extends TwoArgFunction {
 				n++;
 //				ms_old.add_value( lbuf_old, soffset, res, repl );
 				ms_new.add_value( lbuf, soffset, res, repl );
-				soffset = res;
-				start = res;
+				if (soffset == res) {
+					start = res;
+					soffset++;
+				}
+				else {
+					soffset = res;
+					start = res;
+				}
 				if (soffset >= srclen)
 					break; 
 			}
