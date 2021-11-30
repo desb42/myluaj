@@ -39,11 +39,32 @@ public class Match_state {
 		this.maxcounter = src_len*100; //??? is that enough
 		if (maxcounter < 150000) maxcounter = 1500000;
 		this.first_pos = 0;
+                if (src.Src().equals("s:nbsp")) {
+                    int a=1;
+                }
+                //if (pat.Get_data( 0 ) != '^' && src_len < 100)
+                //System.out.println(pat.Src() + " src_len:" + Integer.toString(src_len) + " s:" + src.Src());
 		if (pat_len > 0) {
 			first_char = pat.Get_data( first_pos );
-			if (first_char == '(') {
+			if (first_char == '(') { // allow for '(', '()', '(()', '()('
 				first_pos++;
 				first_char = pat.Get_data( first_pos );
+                                if (first_char == ')') {
+                                    first_pos++;
+                                    first_char = pat.Get_data( first_pos );
+                                    if (first_char == '(') {
+                                        first_pos++;
+                                        first_char = pat.Get_data( first_pos );
+                                    }
+                                }
+                                else if (first_char == '(') {
+                                    first_pos++;
+                                    first_char = pat.Get_data( first_pos );
+                                    if (first_char == ')') {
+                                        first_pos++;
+                                        first_char = pat.Get_data( first_pos );
+                                    }
+                                }
 			}
 			switch (first_char) {
 				case '%':
