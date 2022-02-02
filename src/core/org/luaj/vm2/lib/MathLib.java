@@ -215,13 +215,18 @@ public class MathLib extends TwoArgFunction {
 		public LuaValue call(LuaValue a) {
 			int m = a.checkint();
 			if (m<1) argerror(1, "interval is empty");
-			return valueOf( 1 + random.nextInt(m) );
+			return genRandom(1, m); //valueOf( 1 + random.nextInt(m) );
 		}
-		public LuaValue call(LuaValue a, LuaValue b) {
+		public LuaValue call(LuaValue a, LuaValue b) { // allow 0 through 2^31
 			int m = a.checkint();
 			int n = b.checkint();
 			if (n<m) argerror(2, "interval is empty");
-			return valueOf( m + random.nextInt(n+1-m) );
+			return genRandom(m, n);
+		}
+		private LuaValue genRandom(int min, int max) {
+			int range = max - min + 1;
+			int rand = (int)(random.nextDouble() * range) + min;
+			return valueOf( rand );
 		}
 		
 	}

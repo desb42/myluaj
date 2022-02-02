@@ -176,7 +176,8 @@ public class luac {
 
 	        // list the chunk
 	        if (list)
-	            Print.printCode(chunk);
+	            //Print.printCode(chunk);
+	            Print.print(chunk);
 
 	        // write out the chunk
 	        if (!parseonly) {

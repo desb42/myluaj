@@ -37,46 +37,59 @@ public class Print extends Lua {
 
 	/** String names for each lua opcode value. */
 	public static final String[] OPNAMES = {
-		  "MOVE",
-		  "LOADK",
-		  "LOADKX",
-		  "LOADBOOL",
-		  "LOADNIL",
-		  "GETUPVAL",
-		  "GETTABUP",
-		  "GETTABLE",
-		  "SETTABUP",
-		  "SETUPVAL",
-		  "SETTABLE",
-		  "NEWTABLE",
-		  "SELF",
-		  "ADD",
-		  "SUB",
-		  "MUL",
-		  "DIV",
-		  "MOD",
-		  "POW",
-		  "UNM",
-		  "NOT",
-		  "LEN",
-		  "CONCAT",
-		  "JMP",
-		  "EQ",
-		  "LT",
-		  "LE",
-		  "TEST",
-		  "TESTSET",
-		  "CALL",
-		  "TAILCALL",
-		  "RETURN",
-		  "FORLOOP",
-		  "FORPREP",
-		  "TFORCALL",
-		  "TFORLOOP",
-		  "SETLIST",
-		  "CLOSURE",
-		  "VARARG",
-		  "EXTRAARG",
+"MOVE",
+"LOADK",
+"LOADKX",
+"LOADBOOL",
+"LOADNIL",
+"GETUPVAL",
+"GETTABUP_a",
+"GETTABUP_b",
+"GETTABLE_a",
+"GETTABLE_b",
+"SETUPVAL",
+"SETTABUP_a",
+"SETTABUP_b",
+"SETTABUP_c",
+"SETTABUP_d",
+"SETTABLE_a",
+"SETTABLE_b",
+"SETTABLE_c",
+"SETTABLE_d",
+"NEWTABLE",
+"SELF_a",
+"SELF_b",
+"ADD",
+"SUB",
+"MUL",
+"DIV",
+"MOD",
+"POW",
+"UNM",
+"NOT",
+"LEN",
+"CONCAT",
+"JMP",
+"EQ",
+"LT",
+"LE",
+"TEST",
+"TESTSET",
+"CALL",
+"TAILCALL",
+"RETURN",
+"FORLOOP",
+"FORPREP",
+"TFORCALL",
+"TFORLOOP",
+"SETLIST",
+"CLOSURE",
+"VARARG",
+"EXTRAARG",
+"EQ_a",
+"EQ_b",
+"EQ_c",
+"EQ_d",
 		  null,
 	};
 
@@ -254,6 +267,9 @@ public class Print extends Lua {
 			break;
 		case OP_GETTABLE_a:
                     c += 256;
+				ps.print("  ; ");
+				printConstant(ps, f, INDEXK(c));
+				break;
 		case OP_GETTABLE_b:
 		case OP_SELF_a:
                     c += 256;
@@ -263,15 +279,25 @@ public class Print extends Lua {
 				printConstant(ps, f, INDEXK(c));
 			}
 			break;
+		case OP_EQ_a:
 		case OP_SETTABLE_a:
+				ps.print("  ; ");
+				printConstant(ps, f, INDEXK(b+256));
+				ps.print(" ");
+				printConstant(ps, f, INDEXK(c+256));
+			break;
+		case OP_EQ_b:
 		case OP_SETTABLE_b:
+				ps.print("  ; ");
+				printConstant(ps, f, INDEXK(b+256));
+				ps.print(" -");
+			break;
+		case OP_EQ_c:
 		case OP_SETTABLE_c:
-		case OP_SETTABLE_d:
-                    if (o == OP_SETTABLE_a || o == OP_SETTABLE_c)
-                        b += 256;
-                    if (o == OP_SETTABLE_b || o == OP_SETTABLE_d)
-                        c += 256;
-                    // fall thru
+				ps.print("  ; ");
+				ps.print("- ");
+				printConstant(ps, f, INDEXK(c+256));
+			break;
 		case OP_ADD:
 		case OP_SUB:
 		case OP_MUL:

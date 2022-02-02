@@ -364,6 +364,16 @@ public class LuaTable extends LuaValue implements Metatable {
 		return sb.tostring();
 	}
 
+	public int arg_length() {
+		int n = array.length;
+                while (n > 0) {
+			LuaValue v = array[n-1];
+                        if (v != null)
+                            break;
+                        n--;
+                }
+                return n;
+        }
 	public int length() {
 		int a = getArrayLength();
 		int n = a+1,m=0;

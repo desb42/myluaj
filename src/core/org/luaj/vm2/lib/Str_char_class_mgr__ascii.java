@@ -17,6 +17,7 @@ public class Str_char_class_mgr__ascii extends Str_char_class_mgr {
 			case CLASS_WORD : res = (char_data & (MASK_ALPHA | MASK_DIGIT)) != 0; break;
 			case CLASS_HEX  : res = (char_data & MASK_HEXDIGIT) != 0; break;
 			case CLASS_NULL : res = (cp == 0); break;
+			case CLASS_PRINT: res = (char_data & (MASK_ALPHA | MASK_DIGIT | MASK_PUNCT)) != 0; break;
 			default: return cls == cp;
 		}
 		return (cls_lower == cls) ? res : !res;

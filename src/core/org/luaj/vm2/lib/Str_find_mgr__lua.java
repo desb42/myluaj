@@ -68,7 +68,17 @@ class Str_find_mgr__lua extends Str_find_mgr {
 */
 	}
 	public static Varargs Run(Varargs args, boolean find) {
-		Str_find_mgr__lua mgr = new Str_find_mgr__lua(args.checkstring(1), args.checkstring(2), args.optint(3, 1), args.arg(4).toboolean(), find);
+		LuaString src = args.checkstring(1);
+		LuaString pat = args.checkstring(2);
+
+		// check for a specific match ^%s*(.-)%s*$ (this is a trim whitespace)
+		if (pat.length() == 12 && pat.m_bytes[0] == '^' && pat.m_bytes[1] == '%' && pat.m_bytes[2] == 's' && pat.m_bytes[3] == '*'
+		    && pat.m_bytes[4] == '(' && pat.m_bytes[5] == '.' && pat.m_bytes[6] == '-' && pat.m_bytes[7] == ')' && pat.m_bytes[8] == '%'
+		    && pat.m_bytes[9] == 's' && pat.m_bytes[10] == '*' && pat.m_bytes[11] == '$') {
+			return StringLib.trim(src);
+		}
+
+		Str_find_mgr__lua mgr = new Str_find_mgr__lua(src, pat, args.optint(3, 1), args.arg(4).toboolean(), find);
 		return mgr.Process(true);
 	}
 }

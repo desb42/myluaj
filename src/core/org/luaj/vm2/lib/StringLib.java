@@ -610,7 +610,8 @@ public class StringLib extends TwoArgFunction {
 	static Varargs gsub( Varargs args ) {
 		LuaString src = args.checkstring( 1 );
 		final int srclen = src.length();
-		if (srclen == 0) return varargsOf(src, LuaValue.ZERO); // exit early
+		if (srclen == 0)
+                    return varargsOf(src, LuaValue.ZERO); // exit early
 		LuaString p = args.checkstring( 2 );
                 //if (p.m_bytes.length > 3 && p.m_bytes[0] == '[' && p.m_bytes[1] == '%' && p.m_bytes[2] == 'z') { // [%z
 //                System.out.println("b p:" + p);
@@ -618,7 +619,13 @@ public class StringLib extends TwoArgFunction {
 		LuaValue repl = args.arg( 3 );
 		int max_s = args.optint( 4, srclen + 1 );
 		final boolean anchor = p.length() > 0 && p.charAt( 0 ) == '^';
-		
+
+		// special case for ^%s*(.-)%s*$
+		if (p.length() == 12 && p.m_bytes[0] == '^' && p.m_bytes[1] == '%' && p.m_bytes[2] == 's' && p.m_bytes[3] == '*'
+		    && p.m_bytes[4] == '(' && p.m_bytes[5] == '.' && p.m_bytes[6] == '-' && p.m_bytes[7] == ')' && p.m_bytes[8] == '%'
+		    && p.m_bytes[9] == 's' && p.m_bytes[10] == '*' && p.m_bytes[11] == '$') {
+			return varargsOf(trim(src), valueOf(1));
+		}
 //		Buffer lbuf_old = new Buffer( srclen );
 //		MatchState ms_old = new MatchState( args, src, p );
 		Buffer lbuf = null;
@@ -1262,33 +1269,45 @@ public class StringLib extends TwoArgFunction {
 		final int srclen = src.length();
 		if (srclen == 0) return varargsOf(src, LuaValue.ZERO); // exit early
 
-		Buffer lbuf = new Buffer( srclen );
+		Buffer lbuf = null;
 
 		int pos = 0;
 		int n = 0;
+                String ap = "";
 		while (pos < srclen) {
 			byte b = src.m_bytes[src.m_offset + pos++];
 			switch (b) {
-				case '>': lbuf.append( "&gt;" ); n++; break;
-				case '<': lbuf.append( "&lt;" ); n++; break;
-				case '&': lbuf.append( "&amp;" ); n++; break;
-				case '"': lbuf.append( "&quot;" ); n++; break;
-				default:
-					lbuf.append(b);
+				case '>': ap = "&gt;"; break;
+				case '<': ap = "&lt;"; break;
+				case '&': ap = "&amp;"; break;
+				case '"': ap = "&quot;"; break;
+			}
+			if (ap.length() > 0) {
+				if (lbuf == null)
+					lbuf = new Buffer( srclen );
+				lbuf.append(ap);
+				ap = "";
+				n++;
 			}
 		}
-		return varargsOf(lbuf.tostring(), valueOf(n));
+		if (lbuf == null)
+			return varargsOf(src, valueOf(0));
+		else
+			return varargsOf(lbuf.tostring(), valueOf(n));
 	}
 	static Varargs gsub_x2( Varargs args ) { // trim by another name
 		LuaString src = args.checkstring( 1 );
+		return varargsOf(trim(src), valueOf(0));
+	}
+	static LuaString trim( LuaString src ) {
 		int srclen = src.length();
-		if (srclen == 0) return varargsOf(src, LuaValue.ZERO); // exit early
+		if (srclen == 0) return src; // exit early
 
 		int front = 0;
 		int last = srclen - 1;
 		while (srclen > 0) {
 			byte b = src.m_bytes[src.m_offset + front];
-			if (b == ' ' || b == '\t' || b == '\n' || b == '\r') {
+			if (b == ' ' || b == '\t' || b == '\n' || b == '\r' || b == '\f') {
 				front++;
 				srclen--;
 			}
@@ -1297,7 +1316,7 @@ public class StringLib extends TwoArgFunction {
 		}
 		while (srclen > 0) {
 			byte b = src.m_bytes[src.m_offset + last];
-			if (b == ' ' || b == '\t' || b == '\n' || b == '\r') {
+			if (b == ' ' || b == '\t' || b == '\n' || b == '\r' || b == '\f') {
 				last--;
 				srclen--;
 			}
@@ -1305,13 +1324,14 @@ public class StringLib extends TwoArgFunction {
 				break;
 		}
 		if (srclen == src.length())
-			return varargsOf(src, valueOf(0));
+			return src;
 
 		Buffer lbuf = new Buffer( srclen );
 		for ( int i = 0; i < srclen; ++i ) {
 			byte b = src.m_bytes[src.m_offset + front + i];
+			lbuf.append(b);
 		}
-		return varargsOf(lbuf.tostring(), valueOf(0));
+		return lbuf.tostring();
 	}
 	static Varargs match_x1( Varargs args ) { // match '^[a-zA-Z_:][a-zA-Z0-9_.:-]*$'
 		LuaString src = args.checkstring( 1 );

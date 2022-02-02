@@ -61,7 +61,6 @@ public abstract class Str_find_mgr {
 			// if ^ at BOS, enable anchor and skip forward 1
 			boolean anchor = false;
 			int pat_pos = 0;
-//System.out.println("a p:" + pat.Src() );
 			if (pat_len > 0 && pat.Get_data(0) == '^') { // XOWA: check length > 0 else IndexOutOfBoundsException; PAGE:c:File:Nouveauxvoyagese-p378.png; DATE:2017-07-19
 				anchor = true;
 				pat_pos = 1;

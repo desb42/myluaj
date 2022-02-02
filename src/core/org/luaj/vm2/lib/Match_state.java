@@ -32,6 +32,7 @@ public class Match_state {
 		this.src_len = find_mgr.src_len;
 		this.pat = find_mgr.pat;
 		this.pat_len = find_mgr.pat_len;
+                //this.pat_eps = new  byte[pat_len];
 		this.level = 0;
 		this.capture_bgns = new int[MAX_CAPTURES];
 		this.capture_lens = new int[MAX_CAPTURES];
@@ -39,11 +40,24 @@ public class Match_state {
 		this.maxcounter = src_len*100; //??? is that enough
 		if (maxcounter < 150000) maxcounter = 1500000;
 		this.first_pos = 0;
-                if (src.Src().equals("s:nbsp")) {
+                //System.out.println(pat.Src() + " src_len:" + Integer.toString(src_len) + " s:" + src.Src());
+/*
+                if (src_len > 0 && src_len < 200) {
+                System.out.println(removeUnicode(pat.Src()) + " src_len:" + Integer.toString(src_len) + " s:" + removeUnicode(src.Src()));
+                }
+                else
+                System.out.println(removeUnicode(pat.Src()) + " src_len:" + Integer.toString(src_len));
+                if (pat_len == 1 && pat.Get_data( 0 ) == '#') {//127) {// && pat_len == 1) {
                     int a=1;
                 }
-                //if (pat.Get_data( 0 ) != '^' && src_len < 100)
-                //System.out.println(pat.Src() + " src_len:" + Integer.toString(src_len) + " s:" + src.Src());
+                if (src_len == 0) { //src_len == 32 && src.Get_data(0) == 'D') {
+                    int a=1;
+                }
+                //^(circum
+                if (pat_len > 10 && pat.Get_data( 0 ) == '^' && pat.Get_data( 1 ) == '(' && pat.Get_data( 2 ) == 'c') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
+                    int a=1;
+                }
+*/
 		if (pat_len > 0) {
 			first_char = pat.Get_data( first_pos );
 			if (first_char == '(') { // allow for '(', '()', '(()', '()('
@@ -334,6 +348,7 @@ public class Match_state {
 				}
 				return pat_pos + 1;	
 			case '[':
+                            
 				if (pat.Get_data(pat_pos) == '^')
 					pat_pos++;
 				do {
@@ -343,9 +358,9 @@ public class Match_state {
 					if (pat.Get_data(pat_pos++) == StringLib.L_ESC && pat_pos != pat_len)
 						pat_pos++;
 				} while (pat.Get_data(pat_pos) != ']');
-				return pat_pos + 1;
+				return pat_pos + 1;	
 			default:
-				return pat_pos;
+				return pat_pos;	
 		}
 	}
 
@@ -546,7 +561,8 @@ public class Match_state {
 				case StringLib.L_ESC:
 					if (pat_pos + 1 == pat_len)
 						LuaValue.error("malformed pat (ends with '%')");
-					switch (pat.Get_data(pat_pos + 1)) {
+					int c = pat.Get_data(pat_pos + 1);
+					switch (c) {
 						case 'b': // balanced string?
 							src_pos = matchbalance(src_pos, pat_pos + 2);
 							if (src_pos == NULL) return NULL;
@@ -575,7 +591,6 @@ public class Match_state {
 							continue;
 						}
 						default: {
-							int c = pat.Get_data(pat_pos + 1);
 							if (Character.isDigit((char) c)) {
 								src_pos = match_capture(src_pos, c);
 								if (src_pos == NULL)
@@ -584,6 +599,7 @@ public class Match_state {
 							}
 						}
 					}
+					break;
 				case '$':
 					if (pat_pos + 1 == pat_len) // is the `$' the last char in pat?
 						return (src_pos == src_len) ? src_pos : NULL; // check end of string
@@ -620,4 +636,3 @@ public class Match_state {
 	private static final int CAP_UNFINISHED = -1;
 	public static final int CAP_POSITION = -2;
 }
-

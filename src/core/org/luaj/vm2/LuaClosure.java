@@ -560,7 +560,7 @@ public class LuaClosure extends LuaFunction {
 						for ( int j=1; j<b; ++j )
 							stack[a+j-1] = varargs.arg(j);
 					}
-					continue;				
+					continue;
 
 				case Lua.OP_EXTRAARG:
 					throw new java.lang.IllegalArgumentException("Uexecutable opcode: OP_EXTRAARG");
@@ -645,6 +645,5 @@ public class LuaClosure extends LuaFunction {
 	public String name() {
 		return "<"+p.shortsource()+":"+p.linedefined+">";
 	}
-	
-	
+
 }

@@ -119,6 +119,33 @@ public class Str_char_class_mgr__unicode extends Str_char_class_mgr {
 			case CLASS_NULL: // "\\x00" 
 				res = cp == 0; 
 				break;
+			case CLASS_PRINT: // printable characters (MASK_ALPHA | MASK_DIGIT | MASK_PUNCT)
+				char_type = Character.getType(cp);
+				switch (char_type) {
+					case Character.UPPERCASE_LETTER:
+					case Character.LOWERCASE_LETTER:
+					case Character.TITLECASE_LETTER:
+					case Character.MODIFIER_LETTER:
+					case Character.OTHER_LETTER:
+
+					case Character.DECIMAL_DIGIT_NUMBER:
+
+					case Character.DASH_PUNCTUATION:
+					case Character.START_PUNCTUATION:
+					case Character.END_PUNCTUATION:
+					case Character.CONNECTOR_PUNCTUATION:
+					case Character.OTHER_PUNCTUATION:
+					case Character.INITIAL_QUOTE_PUNCTUATION:
+					case Character.FINAL_QUOTE_PUNCTUATION:
+						res = true;
+						break;
+					case Character.LETTER_NUMBER: // NOTE: LETTER_NUMBER / OTHER_NUMBER is not p{Nd}; FOOTNOTE:Superscript_is_not_a_DIGIT; ISSUE#:617; DATE:2019-11-24
+					case Character.OTHER_NUMBER:
+					default:
+						res = false;
+						break;
+				}
+				break;
 			default: // escaped; EX: "%b" -> "b"
 				return cls == cp;
 		}
