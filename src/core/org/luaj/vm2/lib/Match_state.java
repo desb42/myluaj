@@ -53,8 +53,8 @@ public class Match_state {
                 if (src_len == 0) { //src_len == 32 && src.Get_data(0) == 'D') {
                     int a=1;
                 }
-                //^(circum
-                if (pat_len > 10 && pat.Get_data( 0 ) == '^' && pat.Get_data( 1 ) == '(' && pat.Get_data( 2 ) == 'c') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
+                //[Oo]rganized [Ll]abour
+                if (pat_len == 22 && pat.Get_data( 0 ) == '[' && pat.Get_data( 1 ) == 'O' && pat.Get_data( 2 ) == 'o') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
                     int a=1;
                 }
 */
@@ -371,27 +371,29 @@ public class Match_state {
 			pat_pos++;
 		}
 		while (++pat_pos < ep) {
-			if (pat.Get_data(pat_pos) == StringLib.L_ESC) {
+                    int pcode = pat.Get_data(pat_pos);
+			if (pcode == StringLib.L_ESC) {
 				pat_pos++;
 				if (char_class_mgr.Match_class(cur, pat.Get_data(pat_pos)))
 					return sig;
 			}
 			else if ((pat.Get_data(pat_pos + 1) == '-') && (pat_pos + 2 < ep)) {
 				pat_pos += 2;
-				if (pat.Get_data(pat_pos - 2) <= cur && cur <= pat.Get_data(pat_pos))
+				if (pcode <= cur && cur <= pat.Get_data(pat_pos))
 					return sig;
 			}
-			else if (pat.Get_data(pat_pos) == cur) return sig;
+			else if (pcode == cur) return sig;
 		}
 		return !sig;
 	}
 
 	private boolean singlematch(int cur, int pat_pos, int ep) {
-		switch (pat.Get_data(pat_pos)) {
+            int pcode = pat.Get_data(pat_pos);
+		switch (pcode) {
 			case '.': return true;
 			case StringLib.L_ESC: return char_class_mgr.Match_class(cur, pat.Get_data(pat_pos + 1));
 			case '[': return matchbracketclass(cur, pat_pos, ep - 1);
-			default: return pat.Get_data(pat_pos) == cur;
+			default: return pcode == cur;
 		}
 	}
 
@@ -418,10 +420,15 @@ public class Match_state {
 		return NULL;
 	}
 
-	private int max_expand(int src_pos, int pat_pos, int ep) {
+	private int max_expand(int src_pos, int pat_pos, int ep, boolean found) {
+            if (!found) { // zero hits
+			return i_match(src_pos, ep + 1);
+            }
+//            Db_pattern dbpat = compile(pat_pos, ep);
 		int i = 0; // counts maximum expand for item
 		while	(   src_pos + i < src_len
 				&&	singlematch(src.Get_data(src_pos + i), pat_pos, ep))
+//				&&	singlematch_run(src.Get_data(src_pos + i), dbpat))
 			i++;
 
 		// keeps trying to match with the maximum repetitions 
@@ -435,12 +442,14 @@ public class Match_state {
 	}
 
 	private int min_expand(int src_pos, int pat_pos, int ep) {
+//            Db_pattern dbpat = compile(pat_pos, ep);
 		int src_len = src.Len_in_data();	// XOWA: cache string length; DATE: 2014-08-13
 		for (;;) {
 			int res = i_match(src_pos, ep + 1);
 			if (res != NULL)
 				return res;
 			else if (src_pos < src_len && singlematch(src.Get_data(src_pos), pat_pos, ep))
+//			else if (src_pos < src_len && singlematch_run(src.Get_data(src_pos), dbpat))
 				src_pos++; // try with one more repetition
 			else
 				return NULL;
@@ -616,9 +625,9 @@ public class Match_state {
 					pat_pos = ep + 1;
 					continue;
 				case '*': // 0 or more repetitions
-					return max_expand(src_pos, pat_pos, ep);
+					return max_expand(src_pos, pat_pos, ep, m);
 				case '+': // 1 or more repetitions
-					return (m ? max_expand(src_pos + 1, pat_pos, ep) : NULL);
+					return (m ? max_expand(src_pos + 1, pat_pos, ep, m) : NULL);
 				case '-': // 0 or more repetitions (minimum)
 					return min_expand(src_pos, pat_pos, ep);
 				default:
@@ -635,4 +644,174 @@ public class Match_state {
 	private static /*final*/ int MAX_CAPTURES = 64;
 	private static final int CAP_UNFINISHED = -1;
 	public static final int CAP_POSITION = -2;
+
+public static String removeUnicode(String input){
+    StringBuffer buffer = new StringBuffer(input.length());
+    for (int i =0; i < input.length(); i++){
+        int chr = (int)input.charAt(i);
+        if ( chr > 256){
+        buffer.append("\\u").append(Integer.toHexString(chr));
+        } else {
+            if ( chr == '\n'){
+                buffer.append("\\n");
+            } else if(chr == '\t'){
+                buffer.append("\\t");
+            } else if(chr == '\r'){
+                buffer.append("\\r");
+            } else if(chr == '\b'){
+                buffer.append("\\b");
+            } else if(chr == '\f'){
+                buffer.append("\\f");
+            } else if(chr == '\''){
+                buffer.append("\\'");
+            } else if(chr == '\"'){
+                buffer.append("\\");
+            } else if(chr == '\\'){
+                buffer.append("\\\\");
+            } else {
+            	if (chr < 32 || chr > 126)
+                buffer.append("\\x").append(Integer.toHexString(chr));
+              else
+                buffer.append((char)chr);
+            }
+        }
+    }
+    return buffer.toString();
+}
+	private Db_pattern compile(int pat_pos, int ep) {
+		Db_pattern newpat = new Db_pattern(ep - pat_pos + 5);
+		int pcode = pat.Get_data(pat_pos++);
+		switch (pcode) {
+			case '.':
+				newpat.Add(Db_pattern.DOT);
+				break;
+			case StringLib.L_ESC:
+				newpat.Add(Db_pattern.ESC);
+				newpat.Add(pat.Get_data(pat_pos));
+				break;
+			case '[':
+				matchbracketclass_compile(newpat, pat_pos, ep - 1);
+				break;
+			default:
+				newpat.Add(Db_pattern.SINGLECHAR);
+				newpat.Add(pcode);
+		}
+		return newpat;
+	}
+	private void matchbracketclass_compile(Db_pattern newpat, int pat_pos, int ep) {
+		int pcode = pat.Get_data(pat_pos++);
+		if (pcode == '^') {
+			newpat.Add(Db_pattern.NEGMATCH);
+			pcode = pat.Get_data(pat_pos++);
+		}
+		else
+			newpat.Add(Db_pattern.POSMATCH);
+		while (true) {
+			if (pcode == StringLib.L_ESC) {
+				newpat.Add(Db_pattern.ESC);
+				newpat.Add(pat.Get_data(pat_pos++));
+			}
+			else if ((pat.Get_data(pat_pos) == '-') && (pat_pos + 1 < ep)) {
+				newpat.Add(Db_pattern.RANGE);
+				newpat.Add(pcode);
+                                pat_pos++;
+				newpat.Add(pat.Get_data(pat_pos++));
+			}
+			else {
+				int charcount = 1;
+				while (pat_pos + 1 < ep) {
+					if ((pat.Get_data(pat_pos + 1) == '-') && (pat_pos + 2 < ep))
+						break;
+					charcount++;
+					pat_pos++;
+				}
+				if (charcount == 1) {
+					newpat.Add(Db_pattern.SINGLECHAR);
+					newpat.Add(pcode);
+				}
+				else {
+					newpat.Add(Db_pattern.CHAR);
+					newpat.Add(charcount);
+					pat_pos -= charcount;
+					while (charcount-- > 0) {
+						newpat.Add(pat.Get_data(pat_pos++));
+					}
+				}
+			}
+			if (pat_pos < ep)
+				pcode = pat.Get_data(pat_pos++);
+                        else
+                            break;
+		}
+	}
+	private boolean singlematch_run(int cur, Db_pattern pat) {
+            int pat_pos = 0;
+		int pcode = pat.pattern[pat_pos++];
+		switch (pcode) {
+			case Db_pattern.DOT:
+				return true;
+			case Db_pattern.ESC:
+				return char_class_mgr.Match_class(cur, pat.pattern[pat_pos]);
+			case Db_pattern.POSMATCH:
+				return matchbracketclass_run(cur, pat, pat_pos, true);
+			case Db_pattern.NEGMATCH:
+				return matchbracketclass_run(cur, pat, pat_pos, false);
+			case Db_pattern.SINGLECHAR:
+				return pat.pattern[pat_pos] == cur;
+		}
+                // should never get here
+                return false;
+	}
+	private boolean matchbracketclass_run(int cur, Db_pattern pat, int pat_pos, boolean sig) {
+            int ep = pat.Len();
+		while (pat_pos < ep) {
+			int pcode = pat.pattern[pat_pos++];
+			switch (pcode) {
+				case Db_pattern.ESC:
+					if (char_class_mgr.Match_class(cur, pat.pattern[pat_pos++]))
+						return sig;
+					break;
+				case Db_pattern.RANGE:
+					int bgn = pat.pattern[pat_pos++];
+					int end = pat.pattern[pat_pos++];
+					if (bgn <= cur && cur <= end)
+						return sig;
+					break;
+				case Db_pattern.CHAR:
+					int len = pat.pattern[pat_pos++];
+					while (len-- > 0) {
+						if (pat.pattern[pat_pos++] == cur)
+							return sig;
+					}
+					break;
+				case Db_pattern.SINGLECHAR:
+					if (pat.pattern[pat_pos++] == cur)
+						return sig;
+					break;
+			}
+		}
+		return !sig;
+	}
+}
+class Db_pattern {
+	public int[] pattern;
+	private int size;
+	public int Len() { return len; } private int len;
+	public Db_pattern(int size) {
+		pattern = new int[size];
+		this.size = size;
+		this.len = 0;
+	}
+	public void Add(int val) {
+		pattern[len++] = val;
+	}
+	public static final int
+	  POSMATCH = 1
+	, NEGMATCH = 2
+	, RANGE = 3
+	, CHAR = 4
+	, SINGLECHAR = 5
+	, DOT = 6
+	, ESC = 7
+	;
 }
