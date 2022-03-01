@@ -482,7 +482,17 @@ public class StringLib extends TwoArgFunction {
 			int fmt_len = fmt.length();
 			if (fmt_len > 1 && fmt.charAt(fmt_len - 2) == '.')	// XOWA: penultimmate char has "."
 				fmt = fmt.substring(0, fmt_len - 1) + "0" + fmt.charAt(fmt_len - 1);	// XOWA: add trailing 0, else UnknownFormatConversionException; EX: "02.f" -> "02.0f"
-			buf.append(String.format(Lua.LUA_LOCALE, fmt, v)); // XOWA: call String.format
+			String res = String.format(Lua.LUA_LOCALE, fmt, v); // XOWA: call String.format
+                        // need to check for Infinity, (Infinity), -Infinity or NaN and convert to inf, -inf, -inf, -nan respectively
+                        if (res.equals("Infinity"))
+                            res = "inf";
+                        if (res.equals("(Infinity)"))
+                            res = "-inf";
+                        if (res.equals("-Infinity"))
+                            res = "-inf";
+                        if (res.equals("NaN"))
+                            res = "-nan";
+			buf.append(res); // XOWA: call String.format
 		}		
 		public void format(Buffer buf, LuaString s) {
 			int nullindex = s.indexOf( (byte)'\0', 0 );

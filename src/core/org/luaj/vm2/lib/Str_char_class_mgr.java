@@ -2,7 +2,8 @@ package org.luaj.vm2.lib;
 
 public abstract class Str_char_class_mgr {
 	public abstract boolean Match_class(int codepoint, int character_class);
-		
+	public abstract Str_char_matching_class Get_Match_class(int cls);
+
 	public static final int
 	  CLASS_ALPHA   = (int)'a'  // %a: represents all letters.
 	, CLASS_CTRL    = (int)'c'  // %c: represents all control characters.

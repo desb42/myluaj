@@ -71,7 +71,7 @@ public class LuaDouble extends LuaNumber {
 	public static final LuaDouble NEGINF = new LuaDouble( Double.NEGATIVE_INFINITY );
 	
 	/** Constant String representation for NaN (not a number), "nan" */
-	public static final String JSTR_NAN    = "nan";
+	public static final String JSTR_NAN    = "-nan";
 	
 	/** Constant String representation for positive infinity, "inf" */
 	public static final String JSTR_POSINF = "inf";

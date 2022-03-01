@@ -888,7 +888,29 @@ public class LuaString extends LuaValue implements Char_source {
 	 * @see LuaValue#tonumber()
 	 */
 	public LuaValue tonumber() {
-		double d = scannumber();
+		double d;
+		// special checks for (+/-)nan, (+/-)inf
+		if (m_length >= 3 && m_length <= 4) {
+			boolean flag = true;
+			int offset = m_offset;
+			if (m_bytes[offset] == '-') {
+				flag = false;
+				offset++;
+			}
+			else if (m_bytes[m_offset] == '+')
+				offset++;
+			if (m_length == offset + 3) {
+				if ((m_bytes[offset] | 32) == 'i' && (m_bytes[offset+1] | 32) == 'n' && (m_bytes[offset+2] | 32) == 'f') { // inf ?
+					if (flag)
+						return LuaDouble.POSINF;
+					else
+						return LuaDouble.NEGINF;
+				}
+				else if ((m_bytes[offset] | 32) == 'n' && (m_bytes[offset+1] | 32) == 'a' && (m_bytes[offset+2] | 32) == 'n') // nan ?
+					return LuaDouble.NAN;
+			}
+		}
+		d = scannumber();
 		return Double.isNaN(d)? NIL: valueOf(d);
 	}
 	
@@ -911,32 +933,28 @@ public class LuaString extends LuaValue implements Char_source {
 	public double scannumber() {
 		int i=m_offset,j=m_offset+m_length;
 		// XOWA:trim ws
-		int idx = i;
-		while (idx < j) {
-			switch (m_bytes[idx]) {
-				case 9: case 10: case 13: case 32:
-					++idx;
-					i = idx;
-					break;
-				default:
-					idx = j;
-					break;
-			}
-		}
-		idx = j - 1;
-		while (idx >= i) {
-			switch (m_bytes[idx]) {
-				case 9: case 10: case 13: case 32:
-					j = idx;
-					--idx;
-					break;
-				default:
-					idx = i -1;
-					break;
-			}
-		}
 //		while ( i<j && m_bytes[i]==' ' ) ++i;
+		while ( i<j ) {
+			switch (m_bytes[i]) {
+				case 9: case 10: case 13: case 32:
+					++i;
+					continue;
+				default:
+					break;
+			}
+			break;
+		}
 //		while ( i<j && m_bytes[j-1]==' ' ) --j;
+		while ( i<j ) {
+			switch (m_bytes[j-1]) {
+				case 9: case 10: case 13: case 32:
+					--j;
+					continue;
+				default:
+					break;
+			}
+                        break;
+		}
 		if ( i>=j )
 			return Double.NaN;
 //		if ( m_bytes[i]=='0' && i+1<j && (m_bytes[i+1]=='x'||m_bytes[i+1]=='X'))

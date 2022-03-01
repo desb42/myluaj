@@ -53,8 +53,8 @@ public class Match_state {
                 if (src_len == 0) { //src_len == 32 && src.Get_data(0) == 'D') {
                     int a=1;
                 }
-                //[Oo]rganized [Ll]abour
-                if (pat_len == 22 && pat.Get_data( 0 ) == '[' && pat.Get_data( 1 ) == 'O' && pat.Get_data( 2 ) == 'o') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
+                //[^ -9<-\x7f]
+                if (pat_len == 9 && pat.Get_data( 0 ) == '[' && pat.Get_data( 1 ) == '^' && pat.Get_data( 2 ) == ' ') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
                     int a=1;
                 }
 */
@@ -371,7 +371,24 @@ public class Match_state {
 			pat_pos++;
 		}
 		while (++pat_pos < ep) {
-                    int pcode = pat.Get_data(pat_pos);
+			int pcode = pat.Get_data(pat_pos);
+			if (pcode == StringLib.L_ESC) {
+				pat_pos++;
+				if (char_class_mgr.Match_class(cur, pat.Get_data(pat_pos)))
+					return sig;
+			}
+			else if ((pat.Get_data(pat_pos + 1) == '-') && (pat_pos + 2 < ep)) {
+				pat_pos += 2;
+				if (pcode <= cur && cur <= pat.Get_data(pat_pos))
+					return sig;
+			}
+			else if (pcode == cur) return sig;
+		}
+		return !sig;
+	}
+	private boolean matchbracketclass(int cur, int pat_pos, int ep, boolean sig) { // 20220227 'inverse' logic moved elsewhere
+		while (++pat_pos < ep) {
+			int pcode = pat.Get_data(pat_pos);
 			if (pcode == StringLib.L_ESC) {
 				pat_pos++;
 				if (char_class_mgr.Match_class(cur, pat.Get_data(pat_pos)))
@@ -388,7 +405,7 @@ public class Match_state {
 	}
 
 	private boolean singlematch(int cur, int pat_pos, int ep) {
-            int pcode = pat.Get_data(pat_pos);
+		int pcode = pat.Get_data(pat_pos);
 		switch (pcode) {
 			case '.': return true;
 			case StringLib.L_ESC: return char_class_mgr.Match_class(cur, pat.Get_data(pat_pos + 1));
@@ -420,37 +437,91 @@ public class Match_state {
 		return NULL;
 	}
 
-	private int max_expand(int src_pos, int pat_pos, int ep, boolean found) {
-            if (!found) { // zero hits
-			return i_match(src_pos, ep + 1);
-            }
-//            Db_pattern dbpat = compile(pat_pos, ep);
-		int i = 0; // counts maximum expand for item
-		while	(   src_pos + i < src_len
-				&&	singlematch(src.Get_data(src_pos + i), pat_pos, ep))
-//				&&	singlematch_run(src.Get_data(src_pos + i), dbpat))
-			i++;
+	private int max_expand(int src_pos, int pat_pos, int ep, int i) {
+		// i counts maximum expand for item
+		int pcode = pat.Get_data(pat_pos);
+		switch (pcode) {
+			case '[':
+				boolean sig = true;
+				if (pat.Get_data(pat_pos + 1) == '^') {
+					sig = false;
+					pat_pos++;
+				}
+				while	( src_pos + i < src_len
+					&&	matchbracketclass(src.Get_data(src_pos + i), pat_pos, ep - 1, sig))
+					i++;
+				break;
+			case '.':
+				i = src_len - src_pos;
+				break;
+			case StringLib.L_ESC:
+				int pat_code = pat.Get_data(pat_pos + 1);
+				Str_char_matching_class mc = char_class_mgr.Get_Match_class(pat_code);
+				while	( src_pos + i < src_len
+					&&	mc.Match(src.Get_data(src_pos + i)) ) //char_class_mgr.Match_class(src.Get_data(src_pos + i), pat_code))
+					i++;
+				break;
+			default:
+				while	( src_pos + i < src_len
+					&&	pcode == src.Get_data(src_pos + i))
+					i++;
+				break;
+		}
 
 		// keeps trying to match with the maximum repetitions 
+		int max_i = i;
 		while (i >= 0) {
 			int res = i_match(src_pos + i, ep + 1);
 			if (res != NULL)
 				return res;
 			i--; // else didn't match; reduce 1 repetition to try again
 		}
+		// can we skip max_i? as there have been no matches??????
+		this.stretch = src_pos + max_i; //???????????????????????
 		return NULL;
 	}
 
 	private int min_expand(int src_pos, int pat_pos, int ep) {
-//            Db_pattern dbpat = compile(pat_pos, ep);
 		int src_len = src.Len_in_data();	// XOWA: cache string length; DATE: 2014-08-13
+		int pcode = pat.Get_data(pat_pos);
+		boolean sig = true;
+		Str_char_matching_class mc = null;
+		switch (pcode) {
+			case '[':
+				if (pat.Get_data(pat_pos + 1) == '^') {
+					sig = false;
+					pat_pos++;
+				}
+				break;
+			case StringLib.L_ESC:
+				mc = char_class_mgr.Get_Match_class(pat.Get_data(pat_pos + 1));
+				break;
+		}
 		for (;;) {
 			int res = i_match(src_pos, ep + 1);
 			if (res != NULL)
 				return res;
-			else if (src_pos < src_len && singlematch(src.Get_data(src_pos), pat_pos, ep))
-//			else if (src_pos < src_len && singlematch_run(src.Get_data(src_pos), dbpat))
-				src_pos++; // try with one more repetition
+			else if (src_pos < src_len) {
+                            boolean bv;
+                            switch (pcode) {
+					case '[':
+						bv = matchbracketclass(src.Get_data(src_pos), pat_pos, ep - 1, sig);
+						break;
+					case '.':
+						bv = true;
+						break;
+					case StringLib.L_ESC:
+						bv = mc.Match(src.Get_data(src_pos));
+						break;
+					default:
+						bv = (pcode == src.Get_data(src_pos));
+						break;
+				}
+				if (bv)
+					src_pos++;
+				else
+					return NULL;
+                        }
 			else
 				return NULL;
 		}
@@ -511,8 +582,13 @@ public class Match_state {
 				case 1: // [...] in first pos
 					int ep = classend(first_pos) - 1;
 					int local_pat_pos = first_pos;
+					boolean sig = true;
+					if (pat.Get_data(local_pat_pos + 1) == '^') {
+						sig = false;
+						local_pat_pos++;
+					}
 					while (src_pos < src_len) {
-						if (matchbracketclass(src.Get_data(src_pos), local_pat_pos, ep)) {
+						if (matchbracketclass(src.Get_data(src_pos), local_pat_pos, ep, sig)) {
 							break;
 						}
 						else
@@ -521,8 +597,9 @@ public class Match_state {
 					break;
 				case 2: // %[a...] in first position
 					int local_pat = pat.Get_data(first_pos + 1);
+					Str_char_matching_class mc = char_class_mgr.Get_Match_class(local_pat);
 					while (src_pos < src_len) {
-						if (char_class_mgr.Match_class(src.Get_data(src_pos), local_pat)) {
+						if ( mc.Match(src.Get_data(src_pos))) { //char_class_mgr.Match_class(src.Get_data(src_pos), local_pat)) {
 							break;
 						}
 						else
@@ -556,10 +633,11 @@ public class Match_state {
 			// string is not NUL-terminated.
 			if (pat_pos == pat_len)
 				return src_pos;
+			int pat_chr = pat.Get_data(pat_pos);
 			if (++counter > maxcounter) { //150000) { //
 				throw new LuaError("catastrophic backtrack");
 			}
-			switch (pat.Get_data(pat_pos)) {
+			switch (pat_chr) {
 				case '(': // start capture
 					if (++pat_pos < pat_len && pat.Get_data(pat_pos) == ')') // position capture?
 						return start_capture(src_pos, pat_pos + 1, CAP_POSITION);
@@ -616,26 +694,36 @@ public class Match_state {
 			
 			int ep = classend(pat_pos);
 			boolean m = src_pos < src_len && singlematch(src.Get_data(src_pos), pat_pos, ep);
-			int pc = (ep < pat_len) ? pat.Get_data(ep) : '\0';
-			switch (pc) {
-				case '?': // optional
-					int res;
-					if (m && ((res = i_match(src_pos + 1, ep + 1)) != NULL))
-						return res;
-					pat_pos = ep + 1;
-					continue;
-				case '*': // 0 or more repetitions
-					return max_expand(src_pos, pat_pos, ep, m);
-				case '+': // 1 or more repetitions
-					return (m ? max_expand(src_pos + 1, pat_pos, ep, m) : NULL);
-				case '-': // 0 or more repetitions (minimum)
-					return min_expand(src_pos, pat_pos, ep);
-				default:
-					if (!m)
-						return NULL;
-					src_pos++;
-					pat_pos = ep;
-					continue;
+			pat_chr = (ep < pat_len) ? pat.Get_data(ep) : '\0';
+			if (!m) {
+				switch (pat_chr) {
+					case '*': case '?': case '-':
+						pat_pos = ep + 1;
+						break;
+					default:   /* '+' or no suffix */
+						return NULL;  /* fail */
+				}
+			}
+			else {  /* matched once */
+				switch (pat_chr) {  /* handle optional suffix */
+					case '?':  /* optional */
+						int res;
+						if (((res = i_match(src_pos + 1, ep + 1)) != NULL))
+							return res;
+						pat_pos = ep + 1;
+						break;
+					case '+':  /* 1 or more repetitions */
+						src_pos++;  /* 1 match already done */
+						return max_expand(src_pos, pat_pos, ep, 0);
+					case '*':  /* 0 or more repetitions */
+						return max_expand(src_pos, pat_pos, ep, 1);
+					case '-':  /* 0 or more repetitions (minimum) */
+						return min_expand(src_pos, pat_pos, ep);
+					default:  /* no suffix */
+						src_pos++;
+						pat_pos = ep;
+						break;
+				}
 			}
 		}
 	}
@@ -745,7 +833,7 @@ public static String removeUnicode(String input){
 		}
 	}
 	private boolean singlematch_run(int cur, Db_pattern pat) {
-            int pat_pos = 0;
+		int pat_pos = 0;
 		int pcode = pat.pattern[pat_pos++];
 		switch (pcode) {
 			case Db_pattern.DOT:
