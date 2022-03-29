@@ -42,6 +42,7 @@ public class Match_state {
 		this.first_pos = 0;
                 //System.out.println(pat.Src() + " src_len:" + Integer.toString(src_len) + " s:" + src.Src());
 /*
+//                if (pat_len > 2 && pat.Get_data( 0 ) != '^' && pat.Get_data(pat_len -1) == '$') {
                 if (src_len > 0 && src_len < 200) {
                 System.out.println(removeUnicode(pat.Src()) + " src_len:" + Integer.toString(src_len) + " s:" + removeUnicode(src.Src()));
                 }
@@ -53,32 +54,43 @@ public class Match_state {
                 if (src_len == 0) { //src_len == 32 && src.Get_data(0) == 'D') {
                     int a=1;
                 }
-                //[^ -9<-\x7f]
-                if (pat_len == 9 && pat.Get_data( 0 ) == '[' && pat.Get_data( 1 ) == '^' && pat.Get_data( 2 ) == ' ') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
+                //^Reconstruction:
+                if (pat_len == 16 && pat.Get_data( 0 ) == '^' && pat.Get_data( 1 ) == 'R' && pat.Get_data( 2 ) == 'e') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
+                    int a=1;
+                }
+//                }
+*/
+/*
+                if (pat_len > 10 && pat.Get_data( 0 ) == '[' && pat.Get_data( 1 ) == '%' && pat.Get_data( 2 ) == '.') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
+                if (src_len > 0 && src_len < 200) {
+                System.out.println(removeUnicode(pat.Src()) + " src_len:" + Integer.toString(src_len) + " s:" + removeUnicode(src.Src()));
+                }
+                else
+                System.out.println(removeUnicode(pat.Src()) + " src_len:" + Integer.toString(src_len));
                     int a=1;
                 }
 */
-		if (pat_len > 0) {
+                if (pat_len > 0) {
 			first_char = pat.Get_data( first_pos );
 			if (first_char == '(') { // allow for '(', '()', '(()', '()('
 				first_pos++;
 				first_char = pat.Get_data( first_pos );
-                                if (first_char == ')') {
-                                    first_pos++;
-                                    first_char = pat.Get_data( first_pos );
-                                    if (first_char == '(') {
-                                        first_pos++;
-                                        first_char = pat.Get_data( first_pos );
-                                    }
-                                }
-                                else if (first_char == '(') {
-                                    first_pos++;
-                                    first_char = pat.Get_data( first_pos );
-                                    if (first_char == ')') {
-                                        first_pos++;
-                                        first_char = pat.Get_data( first_pos );
-                                    }
-                                }
+				if (first_char == ')') {
+					first_pos++;
+					first_char = pat.Get_data( first_pos );
+					if (first_char == '(') {
+						first_pos++;
+						first_char = pat.Get_data( first_pos );
+					}
+				}
+				else if (first_char == '(') {
+					first_pos++;
+					first_char = pat.Get_data( first_pos );
+					if (first_char == ')') {
+						first_pos++;
+						first_char = pat.Get_data( first_pos );
+					}
+				}
 			}
 			switch (first_char) {
 				case '%':
@@ -90,8 +102,11 @@ public class Match_state {
 						text_first = true;
 						break;
 					}
-					if (second_char == 'f')
+					if (second_char == 'f') {
+						first_char = 4;
+						text_first = true;
 						break;
+					}
 					if (first_pos + 2 < pat_len) {
 						int third_char = pat.Get_data( first_pos + 2 );
 						if (third_char != '?' && third_char != '*' && third_char != '-') {
@@ -141,6 +156,8 @@ public class Match_state {
 				case '^': case ']':
 				case '(': case ')': case '.': case '*':
 				case '?': case '+':
+					break;
+				case 1: case 2: case 3: // ignore trigger chars
 					break;
 				default:
 					if (first_pos + 1 < pat_len) {
@@ -470,14 +487,17 @@ public class Match_state {
 
 		// keeps trying to match with the maximum repetitions 
 		int max_i = i;
+                int stretch = this.stretch;
 		while (i >= 0) {
 			int res = i_match(src_pos + i, ep + 1);
-			if (res != NULL)
+			if (res != NULL) {
+                            this.stretch = stretch;
 				return res;
+                        }
 			i--; // else didn't match; reduce 1 repetition to try again
 		}
 		// can we skip max_i? as there have been no matches??????
-		this.stretch = src_pos + max_i; //???????????????????????
+		// [aeiou][^aeiou]*$ this.stretch = src_pos + max_i; //???????????????????????
 		return NULL;
 	}
 
@@ -502,8 +522,8 @@ public class Match_state {
 			if (res != NULL)
 				return res;
 			else if (src_pos < src_len) {
-                            boolean bv;
-                            switch (pcode) {
+				boolean bv;
+				switch (pcode) {
 					case '[':
 						bv = matchbracketclass(src.Get_data(src_pos), pat_pos, ep - 1, sig);
 						break;
@@ -521,7 +541,7 @@ public class Match_state {
 					src_pos++;
 				else
 					return NULL;
-                        }
+			}
 			else
 				return NULL;
 		}
@@ -609,6 +629,35 @@ public class Match_state {
 				case 3: // $ as the only character
 					src_pos = src.Len_in_data();
 					break;
+				case 4: { // frontier
+					local_pat_pos = first_pos + 2;
+					if (pat.Get_data(local_pat_pos) != '[') {
+						LuaValue.error("Missing [after %f in pat");
+					}
+					ep = classend(local_pat_pos);
+					sig = true;
+					if (pat.Get_data(local_pat_pos + 1) == '^') {
+						sig = false;
+						local_pat_pos++;
+					}
+					int previous = (src_pos == 0) ? -1 : src.Get_data(src_pos - 1);
+					while (true) {
+						int next = (src_pos == src.Len_in_data()) ? '\0' : src.Get_data(src_pos);
+						if ( matchbracketclass(previous, local_pat_pos, ep - 1, sig)
+						||  !matchbracketclass(next    , local_pat_pos, ep - 1, sig)) {
+							if (++src_pos < src_len) {
+								previous = next;
+							}
+							else {
+								src_pos = src_len; //ugh
+								break;
+							}
+						}
+						else
+							break;
+					}
+					break;
+				}
 				default:
 					while (src_pos < src_len) {
 						if (src.Get_data(src_pos) == first_char) {
@@ -661,6 +710,11 @@ public class Match_state {
 								LuaValue.error("Missing [after %f in pat");
 							}
 							int ep = classend(pat_pos);
+							boolean sig = true;
+							if (pat.Get_data(pat_pos + 1) == '^') {
+								sig = false;
+								pat_pos++;
+							}
 							int previous = (src_pos == 0) ? -1 : src.Get_data(src_pos - 1);
 							// NOTE: reinstated `next` variable declaration (must have been lost in refactoring); ISSUE#:732; DATE:2020-05-29
 							// REF.LUA:https://www.lua.org/source/5.1/lstrlib.c.html
@@ -670,8 +724,8 @@ public class Match_state {
 							// * DATE:2014-08-14: added bounds check of "src_pos < src.m_length"
 							// * DATE:2016-01-28: changed "matchbracketclass" to "!matchbracketclass"; PAGE:en.w:A
 							// * DATE:2020-05-29: removed "src_pos < src.Len_in_data() && "; ISSUE#:732
-							if ( matchbracketclass(previous, pat_pos, ep - 1)
-							||  !matchbracketclass(next    , pat_pos, ep - 1)) {
+							if ( matchbracketclass(previous, pat_pos, ep - 1, sig)
+							||  !matchbracketclass(next    , pat_pos, ep - 1, sig)) {
 								return NULL;
 							}
 							pat_pos = ep;
@@ -847,11 +901,11 @@ public static String removeUnicode(String input){
 			case Db_pattern.SINGLECHAR:
 				return pat.pattern[pat_pos] == cur;
 		}
-                // should never get here
-                return false;
+		// should never get here
+		return false;
 	}
 	private boolean matchbracketclass_run(int cur, Db_pattern pat, int pat_pos, boolean sig) {
-            int ep = pat.Len();
+		int ep = pat.Len();
 		while (pat_pos < ep) {
 			int pcode = pat.pattern[pat_pos++];
 			switch (pcode) {

@@ -87,7 +87,7 @@ public class LuaString extends LuaValue implements Char_source {
 			for (int i = 0; i < len; i++) {
 				newstr[i] = str[i + bgn];
 			}
-//			System.out.println("strings " + Integer.toString(bgn) + " " + Integer.toString(end) + " " + Integer.toString(str.length) + " " + String_.New_bry_utf8(newstr) + " orig:" + String_.New_bry_utf8(str));
+			//System.out.println("strings " + Integer.toString(bgn) + " " + Integer.toString(end) + " " + Integer.toString(str.length) + " " + String_.New_bry_utf8(newstr) + " orig:" + String_.New_bry_utf8(str));
 			str = newstr;
 		}
 		return str;

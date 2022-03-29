@@ -570,6 +570,8 @@ public class LuaClosure extends LuaFunction {
 				}
 			}
 		} catch ( LuaError le ) {
+                    //StackTraceElement[] ste = le.getStackTrace();
+                    //StackTraceElement el = ste[2];
 			if (le.traceback == null)
 				processErrorHooks(le, p, pc);
 			le.pstack += "\n" + p.toString();

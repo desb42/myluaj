@@ -23,6 +23,8 @@ package org.luaj.vm2.lib;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import static java.lang.Double.NEGATIVE_INFINITY;
+import static java.lang.Double.POSITIVE_INFINITY;
 
 import org.luaj.vm2.Lua;
 import org.luaj.vm2.LuaClosure;
@@ -477,21 +479,22 @@ public class StringLib extends TwoArgFunction {
 	
 		public void format(Buffer buf, String fmt, double v) {
 			// buf.append( String.valueOf( x ) );
-			if (fmt.startsWith("%0."))
-				fmt = "%" + fmt.substring(2);					// XOWA: remove leading 0, else MissingFormatWidthException
-			int fmt_len = fmt.length();
-			if (fmt_len > 1 && fmt.charAt(fmt_len - 2) == '.')	// XOWA: penultimmate char has "."
-				fmt = fmt.substring(0, fmt_len - 1) + "0" + fmt.charAt(fmt_len - 1);	// XOWA: add trailing 0, else UnknownFormatConversionException; EX: "02.f" -> "02.0f"
-			String res = String.format(Lua.LUA_LOCALE, fmt, v); // XOWA: call String.format
-                        // need to check for Infinity, (Infinity), -Infinity or NaN and convert to inf, -inf, -inf, -nan respectively
-                        if (res.equals("Infinity"))
-                            res = "inf";
-                        if (res.equals("(Infinity)"))
-                            res = "-inf";
-                        if (res.equals("-Infinity"))
-                            res = "-inf";
-                        if (res.equals("NaN"))
-                            res = "-nan";
+			// need to check for Infinity, -Infinity or NaN and convert to inf, -inf, -inf, -nan respectively
+			String res;
+			if (v == POSITIVE_INFINITY)
+				res = "inf";
+			else if (v == NEGATIVE_INFINITY)
+				res = "-inf";
+			else if (Double.isNaN(v))
+				res = "-nan";
+			else {
+				if (fmt.startsWith("%0."))
+					fmt = "%" + fmt.substring(2);				// XOWA: remove leading 0, else MissingFormatWidthException
+				int fmt_len = fmt.length();
+				if (fmt_len > 1 && fmt.charAt(fmt_len - 2) == '.')	// XOWA: penultimmate char has "."
+					fmt = fmt.substring(0, fmt_len - 1) + "0" + fmt.charAt(fmt_len - 1);	// XOWA: add trailing 0, else UnknownFormatConversionException; EX: "02.f" -> "02.0f"
+				res = String.format(Lua.LUA_LOCALE, fmt, v); // XOWA: call String.format
+			}
 			buf.append(res); // XOWA: call String.format
 		}		
 		public void format(Buffer buf, LuaString s) {

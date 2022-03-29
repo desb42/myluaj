@@ -1528,6 +1528,9 @@ class Copy {
 				if ( (k = n.arg1()).isnil() )
 					break;
 				LuaValue v = n.arg(2);
+                                if (v instanceof LuaClosure)
+				retVal.set(k, v); //eeeeeek
+                                else
 				retVal.set(k, deepcopy(v));
 			}
 			return retVal;
