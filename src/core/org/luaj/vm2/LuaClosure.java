@@ -205,6 +205,10 @@ public class LuaClosure extends LuaFunction {
 				
 				// process the op code
 				switch ( i & 0x3f ) {
+                                    case Lua.OP_TYPE:
+					if ( (stack[i>>>23].type() == ((i>>14)&0x1ff)) != (a!=0) ) 
+						++pc;
+                                        continue;
 				
 				case Lua.OP_MOVE:/*	A B	R(A):= R(B)					*/
 					stack[a] = stack[i>>>23];

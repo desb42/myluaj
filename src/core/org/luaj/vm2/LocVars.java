@@ -24,7 +24,7 @@ package org.luaj.vm2;
 /**
  * Data class to hold debug information relating to local variables for a {@link Prototype}
  */
-public class LocVars {
+public class LocVars implements java.io.Serializable {
 	/** The local variable name */
 	public LuaString varname;
 	

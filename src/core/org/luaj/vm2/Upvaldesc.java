@@ -21,7 +21,7 @@
 ******************************************************************************/
 package org.luaj.vm2;
 
-public class Upvaldesc {
+public class Upvaldesc implements java.io.Serializable {
 
 	/* upvalue name (for debug information) */
 	public LuaString name;

@@ -37,10 +37,17 @@ package org.luaj.vm2;
  * @see LuaValue
  * @see LuaValue#NIL
  */
-public class LuaNil extends LuaValue {
+public class LuaNil extends LuaValue implements java.io.Serializable {
 	
-	static final LuaNil _NIL = new LuaNil();
-	
+	private static final LuaNil _NIL = new LuaNil();
+        
+	public static LuaNil getInstance() {
+		return _NIL;
+	}
+	protected Object readResolve() {
+		return getInstance();
+	}
+
 	public static LuaValue s_metatable;
 	
 	LuaNil() {}
@@ -61,7 +68,10 @@ public class LuaNil extends LuaValue {
 		return "nil";
 	}
 
-	public LuaValue not()  { 
+//	public LuaValue eq( LuaValue val )    { return val == this || val.type() == LuaValue.TNIL ? TRUE: FALSE; }
+//	public boolean eq_b( LuaValue val )   { return val == this || val.type() == LuaValue.TNIL; }
+
+        public LuaValue not()  { 
 		return LuaValue.TRUE;  
 	}
 	

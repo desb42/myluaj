@@ -39,65 +39,18 @@ package org.luaj.vm2;
  * @see LuaValue#TRUE
  * @see LuaValue#FALSE
  */
-public class LuaBoolean extends LuaValue implements java.io.Serializable {
+public final class LuaBoolean_False extends LuaBoolean implements java.io.Serializable {
 
-	/** The singleton instance representing lua {@code true} */
-//	static final LuaBoolean _TRUE = new LuaBoolean(true);
-	
 	/** The singleton instance representing lua {@code false} */
-//	static final LuaBoolean _FALSE = new LuaBoolean(false);
+	private static final LuaBoolean _FALSE = new LuaBoolean_False();
 	
-	/** Shared static metatable for boolean values represented in lua. */
-	public static LuaValue s_metatable;
-
-	/** The value of the boolean */
-	public final boolean v;
-
-	LuaBoolean(boolean b) {
-		this.v = b;
+	public LuaBoolean_False() {
+		super(false);
 	}
-
-	public int type() {
-		return LuaValue.TBOOLEAN;
+	public static LuaBoolean getInstance() {
+		return _FALSE;
 	}
-
-	public String typename() {
-		return "boolean";
-	}
-
-	public boolean isboolean() {
-		return true;
-	}
-
-	public LuaValue not() {
-		return v ? FALSE : LuaValue.TRUE;
-	}
-
-	/**
-	 * Return the boolean value for this boolean
-	 * @return value as a Java boolean
-	 */
-	public boolean booleanValue() {
-		return v;
-	}
-
-	public boolean toboolean() {
-		return v;
-	}
-
-	public String tojstring() {
-		return v ? "true" : "false";
-	}
-
-	public boolean optboolean(boolean defval) {
-		return this.v;
-	}
-	
-	public boolean checkboolean() {
-		return v;
-	}
-	
-	public LuaValue getmetatable() { 
-		return s_metatable; 
+	protected Object readResolve() {
+		return getInstance();
 	}
 }

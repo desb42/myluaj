@@ -987,12 +987,58 @@ public class FuncState extends LuaC {
 			b -= 256;
 		else
 			op += 2;
-		if (c > 255)
+		if (c > 255) {
 			c -= 256;
+			LuaValue str = this.f.k[c];
+			if (str.equals(S_function)) {
+				if (checktype(cond, e1, LuaValue.TFUNCTION)) return;
+			}
+			else if (str.equals(S_string)) {
+				if (checktype(cond, e1, LuaValue.TSTRING)) return;
+			}
+			else if (str.equals(S_table)) {
+				if (checktype(cond, e1, LuaValue.TTABLE)) return;
+			}
+			else if (str.equals(S_number)) {
+				if (checktype(cond, e1, LuaValue.TNUMBER)) return;
+			}
+			else if (str.equals(S_nil)) {
+				if (checktype(cond, e1, LuaValue.TNIL)) return;
+			}
+		}
+//                            int i = this.f.code[this.pc - 1];
+//                            int aa, bb, cc;
+//                            aa = ((i>>6) & 0xff);
+//                            bb = i>>>23;
+//                            cc = (i>>14)&0x1ff;
+//                            System.out.println(Integer.toString(i & 0x3f) + " " + Integer.toString(aa) + " " + Integer.toString(bb) + " " + Integer.toString(cc));
 		else
 			op += 1;
 		e1.u.info = this.condjump(op, cond, b, c);
 		e1.k = LexState.VJMP;
+	}
+        private static LuaValue S_function = LuaString.valueOf("function");
+        private static LuaValue S_string = LuaString.valueOf("string");
+        private static LuaValue S_table = LuaString.valueOf("table");
+        private static LuaValue S_number = LuaString.valueOf("number");
+        private static LuaValue S_nil = LuaString.valueOf("nil");
+	boolean checktype(int cond, expdesc e1, int typecode) {
+		if ((this.f.code[this.pc - 1] & 0x3f) == 38 && (this.f.code[this.pc - 2] & 0x3f) == 0) {
+                                if ((this.f.code[this.pc - 3] & 0x3f) != 6 && (this.f.code[this.pc - 3] & 0x3f) != 5) {
+                                    int a=1;
+                                }
+			int i = this.f.code[this.pc - 2];
+			int aa, bb, cc;
+			aa = ((i>>6) & 0xff) - 1; // change register
+			bb = i>>>23;
+			cc = (i>>14)&0x1ff;
+			this.f.code[this.pc - 3] = CREATE_ABC(0, aa, bb, cc); // update the code
+			pc -= 2;
+			e1.u.info = this.condjump(OP_TYPE, cond, aa, typecode);
+			e1.k = LexState.VJMP;
+			return true;
+		}
+		return false;
 	}
 
 	void codecomp(int /* OpCode */op, int cond, expdesc e1, expdesc e2) {

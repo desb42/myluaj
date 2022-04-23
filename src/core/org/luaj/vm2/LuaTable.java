@@ -72,7 +72,7 @@ import java.util.Vector;
  * </ul>
  * @see LuaValue
  */
-public class LuaTable extends LuaValue implements Metatable {
+public class LuaTable extends LuaValue implements Metatable, java.io.Serializable {
 	private static final int      MIN_HASH_CAPACITY = 2;
 	private static final LuaString N = valueOf("n");
 	
@@ -318,7 +318,8 @@ public class LuaTable extends LuaValue implements Metatable {
 		do {
 			r = rawget(pos+1);
 			rawset(pos++, r);
-		} while (!r.isnil());
+		//} while (!r.isnil());
+		} while (pos <= n); // 20220422 can have NIL in the middle of a table fr.wikipedia.org/wiki/La_Pointe_(Houat)
 		
 		return v.isnil()? NIL: v; // ISSUE#:604; should return NIL, not NONE; ltablib.tremove returns 0; DATE:2019-10-30
 	}
@@ -1527,11 +1528,7 @@ class Copy {
 				Varargs n = tab.next(k);
 				if ( (k = n.arg1()).isnil() )
 					break;
-				LuaValue v = n.arg(2);
-                                if (v instanceof LuaClosure)
-				retVal.set(k, v); //eeeeeek
-                                else
-				retVal.set(k, deepcopy(v));
+				retVal.set(k, deepcopy(n.arg(2)));
 			}
 			return retVal;
 		}

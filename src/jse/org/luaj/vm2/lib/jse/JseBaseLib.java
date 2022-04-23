@@ -96,6 +96,22 @@ public class JseBaseLib extends org.luaj.vm2.lib.BaseLib {
 	 * @return InputStream, or null if not found. 
 	 */
 	public InputStream findResource(String filename) {
+            InputStream is;
+            is = findResource_file(filename + ".dump");
+            if (is != null) {
+                     try {
+                    is = new java.io.ObjectInputStream(is);
+                    }
+                    catch (Exception e) {
+                        
+                    }
+            }
+            else {
+                is = findResource_file(filename);
+            }
+            return is;
+        }
+	private InputStream findResource_file(String filename) {
 		File f = new File(filename);
                 InputStream is;
 		if ( ! f.exists() )

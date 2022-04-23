@@ -163,13 +163,13 @@ public class LuaValue extends Varargs {
 	};
 	
 	/** LuaValue constant corresponding to lua {@code nil} */
-	public static final LuaValue   NIL       = LuaNil._NIL;
+	public static final LuaValue   NIL       = LuaNil.getInstance();
 	
 	/** LuaBoolean constant corresponding to lua {@code true} */
-	public static final LuaBoolean TRUE      = LuaBoolean._TRUE;
+	public static final LuaBoolean TRUE      = LuaBoolean_True.getInstance();
 
 	/** LuaBoolean constant corresponding to lua {@code false} */
-	public static final LuaBoolean FALSE     = LuaBoolean._FALSE;
+	public static final LuaBoolean FALSE     = LuaBoolean_False.getInstance();
 
 	/** LuaValue constant corresponding to a {@link Varargs} list of no values */
 	public static final LuaValue   NONE      = None._NONE;

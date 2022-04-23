@@ -54,8 +54,8 @@ public class Match_state {
                 if (src_len == 0) { //src_len == 32 && src.Get_data(0) == 'D') {
                     int a=1;
                 }
-                //^Reconstruction:
-                if (pat_len == 16 && pat.Get_data( 0 ) == '^' && pat.Get_data( 1 ) == 'R' && pat.Get_data( 2 ) == 'e') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
+                //([%a%d])%.?[/%?#].*$
+                if (pat_len == 20 && pat.Get_data( 0 ) == '(' && pat.Get_data( 1 ) == '[' && pat.Get_data( 2 ) == '%') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
                     int a=1;
                 }
 //                }

@@ -358,6 +358,9 @@ public class BaseLib extends TwoArgFunction implements ResourceFinder {
 	// "type",  // (v) -> value
 	static final class type extends LibFunction {
 		public LuaValue call(LuaValue arg) {
+                    //String txt = "type:" + arg.typename() + "-" + arg;
+                    //System.out.println(txt);
+                    
 			return valueOf(arg.typename());
 		}
 	}

@@ -59,9 +59,6 @@ public class LuaError extends RuntimeException {
 			return traceback;
 		pstack = "";
 		String m = super.getMessage();
-                if (!m.equals("module `Module:WikidataIB/nolinks' not found")) {
-                    int a=1;
-                }
 		if (m == null)
 			return null;
 		if (fileline != null)

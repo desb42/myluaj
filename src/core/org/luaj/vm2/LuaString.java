@@ -27,6 +27,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.ObjectInputStream;
 
 import org.luaj.vm2.lib.MathLib;
 import org.luaj.vm2.lib.StringLib;
@@ -63,7 +64,7 @@ import gplx.objects.strings.char_sources.Char_source;
  * @see LuaValue#valueOf(String)
  * @see LuaValue#valueOf(byte[])
  */
-public class LuaString extends LuaValue implements Char_source {
+public class LuaString extends LuaValue implements Char_source, java.io.Serializable {
 	private String src = null;
 	public String Src() {
 		if (src == null)
@@ -650,6 +651,15 @@ public class LuaString extends LuaValue implements Char_source {
 	 * @return {@link InputStream} whose data matches the bytes in this {@link LuaString}
 	 */
 	public InputStream toInputStream() {
+            if (m_bytes[m_offset] == -84) //0xAC)
+                try {
+		return new ObjectInputStream(new ByteArrayInputStream(m_bytes, m_offset, m_length));
+                }
+            catch (Exception e) {
+                System.out.println("eeeeeek");
+                return null;
+            }
+            else
 		return new ByteArrayInputStream(m_bytes, m_offset, m_length);
 	}
 	

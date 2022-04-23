@@ -216,17 +216,41 @@ public class Globals extends LuaTable {
 	/** Load the content form an input stream as a binary chunk or text file. */
 	public LuaValue load(InputStream is, String chunkname, String mode, LuaValue env) {
 		try {
+                    Prototype p;
+                    if (is instanceof java.io.ObjectInputStream)
+                        p = (Prototype)((java.io.ObjectInputStream)is).readObject();
+                    else {
 			if (is instanceof java.io.FileInputStream) {
 				String s = Load_from_stream_as_str(is, chunkname);
 				is = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
 			}
-			Prototype p = loadPrototype(is, chunkname, mode);
+			p = loadPrototype(is, chunkname, mode);
+                        is.close();
+                        //System.out.println(chunkname);
+                        if (chunkname.charAt(0) == '@')
+                            WritePrototype(p, chunkname);
+                    }
 			return loader.load(p, chunkname, env);
 		} catch (LuaError l) {
 			throw l;
 		} catch (Exception e) {
 			return error("load "+chunkname+": "+e);
 		}
+	}
+	public void WritePrototype(Prototype p, String filename) throws java.io.FileNotFoundException, IOException {
+            int s = filename.lastIndexOf('/');
+            if (s > 0) {
+                filename = "d:/des/xowa_x/" + filename.substring(s + 1) + ".dump";
+            }
+            else
+                filename = "d:/des/xowa_x/" + filename.substring(1) + ".dump";
+            
+		java.io.File file = new java.io.File(filename);
+		file.delete();
+		file.createNewFile();
+		final java.io.ObjectOutputStream objectInputStream = new java.io.ObjectOutputStream(new java.io.FileOutputStream(file));
+		objectInputStream.writeObject(p);
+		objectInputStream.close();
 	}
 
 	/** Load lua source or lua binary from an input stream into a Prototype. 

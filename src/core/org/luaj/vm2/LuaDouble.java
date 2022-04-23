@@ -59,7 +59,7 @@ import org.luaj.vm2.lib.MathLib;
  * @see LuaValue#valueOf(int)
  * @see LuaValue#valueOf(double)
  */
-public class LuaDouble extends LuaNumber {
+public class LuaDouble extends LuaNumber implements java.io.Serializable {
 
 	/** Constant LuaDouble representing NaN (not a number) */
 	public static final LuaDouble NAN    = new LuaDouble( Double.NaN );

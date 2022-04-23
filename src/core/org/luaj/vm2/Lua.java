@@ -248,6 +248,7 @@ public class Lua {
 	public static final int OP_EQ_b = 50; /*	A B C	if ((RK(B) == RK(C)) ~= A) then pc++		*/
 	public static final int OP_EQ_c = 51; /*	A B C	if ((RK(B) == RK(C)) ~= A) then pc++		*/
 	public static final int OP_EQ_d = 52; /*	A B C	if ((RK(B) == RK(C)) ~= A) then pc++		*/
+	public static final int OP_TYPE = 53; /*	A B C	if (TYPE(B) == C) ~= A) then pc++		*/
 	//public static final int NUM_OPCODES	= OP_EXTRAARG + 1;
 	public static final int NUM_OPCODES	= OP_EQ_d + 1;
 
@@ -348,6 +349,7 @@ public class Lua {
 		 (1<<7) | (0<<6) | (OpArgK<<4) | (OpArgK<<2) | (iABC),		/* OP_EQ_b */
 		 (1<<7) | (0<<6) | (OpArgK<<4) | (OpArgK<<2) | (iABC),		/* OP_EQ_c */
 		 (1<<7) | (0<<6) | (OpArgK<<4) | (OpArgK<<2) | (iABC),		/* OP_EQ_d */
+		 (1<<7) | (0<<6) | (OpArgK<<4) | (OpArgK<<2) | (iABC),		/* OP_TYPE */
 	  };
 
 	public static int getOpMode(int m) {

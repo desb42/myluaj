@@ -81,7 +81,7 @@ package org.luaj.vm2;
  * @see Print#print
  */
 
-public class Prototype {
+public class Prototype implements java.io.Serializable {
 	/* constants used by the function */
 	public LuaValue[] k; 
 	public int[] code;
