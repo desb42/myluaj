@@ -227,8 +227,8 @@ public class Globals extends LuaTable {
 			p = loadPrototype(is, chunkname, mode);
                         is.close();
                         //System.out.println(chunkname);
-                        if (chunkname.charAt(0) == '@')
-                            WritePrototype(p, chunkname);
+//                        if (chunkname.charAt(0) == '@')
+//                            WritePrototype(p, chunkname);
                     }
 			return loader.load(p, chunkname, env);
 		} catch (LuaError l) {
@@ -291,6 +291,7 @@ public class Globals extends LuaTable {
 	public Prototype compilePrototype(InputStream stream, String chunkname) throws IOException {
 		if (compiler == null)
 			error("No compiler.");
+                //System.out.println("-c " + chunkname);
 		return compiler.compile(stream, chunkname);
 	}
 

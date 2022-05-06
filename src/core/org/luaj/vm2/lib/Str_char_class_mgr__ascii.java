@@ -112,6 +112,8 @@ public class Str_char_class_mgr__ascii extends Str_char_class_mgr {
 			}
 			if  (	(c >= '!' && c <= '/') 
 				||	(c >= ':' && c <= '@')
+				||	(c >= '[' && c <= '`')
+				||	(c >= '{' && c <= '~')
 				) {
 				rv[i] |= MASK_PUNCT;
 			}

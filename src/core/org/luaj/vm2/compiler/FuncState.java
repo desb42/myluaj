@@ -65,6 +65,8 @@ public class FuncState extends LuaC {
 	short nups;  /* number of upvalues */
 	short freereg;  /* first free register */
 
+        short type_op_pos; // stack pos of OP_TYPE fixup
+        
 	FuncState() {
 	}
 	
@@ -991,19 +993,19 @@ public class FuncState extends LuaC {
 			c -= 256;
 			LuaValue str = this.f.k[c];
 			if (str.equals(S_function)) {
-				if (checktype(cond, e1, LuaValue.TFUNCTION)) return;
+				if (checktype(cond, e1, LuaValue.TFUNCTION, b)) return;
 			}
 			else if (str.equals(S_string)) {
-				if (checktype(cond, e1, LuaValue.TSTRING)) return;
+				if (checktype(cond, e1, LuaValue.TSTRING, b)) return;
 			}
 			else if (str.equals(S_table)) {
-				if (checktype(cond, e1, LuaValue.TTABLE)) return;
+				if (checktype(cond, e1, LuaValue.TTABLE, b)) return;
 			}
 			else if (str.equals(S_number)) {
-				if (checktype(cond, e1, LuaValue.TNUMBER)) return;
+				if (checktype(cond, e1, LuaValue.TNUMBER, b)) return;
 			}
 			else if (str.equals(S_nil)) {
-				if (checktype(cond, e1, LuaValue.TNIL)) return;
+				if (checktype(cond, e1, LuaValue.TNIL, b)) return;
 			}
 		}
 //                            int i = this.f.code[this.pc - 1];
@@ -1017,13 +1019,35 @@ public class FuncState extends LuaC {
 		e1.u.info = this.condjump(op, cond, b, c);
 		e1.k = LexState.VJMP;
 	}
-        private static LuaValue S_function = LuaString.valueOf("function");
-        private static LuaValue S_string = LuaString.valueOf("string");
-        private static LuaValue S_table = LuaString.valueOf("table");
-        private static LuaValue S_number = LuaString.valueOf("number");
-        private static LuaValue S_nil = LuaString.valueOf("nil");
-	boolean checktype(int cond, expdesc e1, int typecode) {
-		if ((this.f.code[this.pc - 1] & 0x3f) == 38 && (this.f.code[this.pc - 2] & 0x3f) == 0) {
+	private static LuaValue S_function = LuaString.valueOf("function");
+	private static LuaValue S_string = LuaString.valueOf("string");
+	private static LuaValue S_table = LuaString.valueOf("table");
+	private static LuaValue S_number = LuaString.valueOf("number");
+	private static LuaValue S_nil = LuaString.valueOf("nil");
+	private static LuaValue S_ENV = LuaString.valueOf("_ENV");
+	private static LuaValue S_type = LuaString.valueOf("type");
+	boolean checktype(int cond, expdesc e1, int typecode, int b) {
+		if ((this.f.code[this.pc - 1] & 0x3f) == OP_CALL) {
+			int i = this.f.code[this.pc - 3];
+			int aa, bb, cc;
+			//aa = ((i>>6) & 0xff);
+			bb = i>>>23;
+			cc = (i>>14)&0x1ff;
+			if ((i & 0x3f) == OP_GETTABUP_a && this.f.upvalues[bb].name.equals(S_ENV) && f.k[cc].equals(S_type)) {
+				i = this.f.code[this.pc - 2];
+				aa = ((i>>6) & 0xff) - 1; // change register
+				bb = i>>>23;
+				cc = (i>>14)&0x1ff;
+				//System.out.println("- " + this.f);
+				this.f.code[this.pc - 3] = CREATE_ABC(i & 0x3f, aa, bb, cc); // update the code
+				pc -= 2;
+				this.type_op_pos = (short)aa;
+				e1.u.info = this.condjump(OP_TYPE, cond, aa, typecode);
+				e1.k = LexState.VJMP;
+				return true;
+			}
+		}
+/*		if ((this.f.code[this.pc - 1] & 0x3f) == 38 && (this.f.code[this.pc - 2] & 0x3f) == 0) {
                                 if ((this.f.code[this.pc - 3] & 0x3f) != 6 && (this.f.code[this.pc - 3] & 0x3f) != 5) {
                                     int a=1;
                                 }
@@ -1034,10 +1058,16 @@ public class FuncState extends LuaC {
 			cc = (i>>14)&0x1ff;
 			this.f.code[this.pc - 3] = CREATE_ABC(0, aa, bb, cc); // update the code
 			pc -= 2;
+                        this.type_op_pos = (short)aa;
 			e1.u.info = this.condjump(OP_TYPE, cond, aa, typecode);
 			e1.k = LexState.VJMP;
 			return true;
-		}
+		}*/
+                else if (b == this.type_op_pos ) {
+			e1.u.info = this.condjump(OP_TYPE, cond, b, typecode);
+			e1.k = LexState.VJMP;
+			return true;
+                }
 		return false;
 	}
 

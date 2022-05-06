@@ -963,23 +963,12 @@ public class LuaString extends LuaValue implements Char_source, java.io.Serializ
 				default:
 					break;
 			}
-                        break;
+			break;
 		}
 		if ( i>=j )
 			return Double.NaN;
 //		if ( m_bytes[i]=='0' && i+1<j && (m_bytes[i+1]=='x'||m_bytes[i+1]=='X'))
 //			return scanlong(16, i+2, j);
-		if ( 	i + 1 < j
-			&& 	m_bytes[i] == '0'
-			) {
-			byte next_byte = m_bytes[i+1];
-			if (next_byte == 'x' || next_byte == 'X') {
-				return i + 2 < j	// XOWA: bounds check; DATE:2014-08-26
-					? scanlong(16, i+2, j)
-					: Double.NaN
-					;
-			}
-		}
 		double l = scanlong(10, i, j);
 		return Double.isNaN(l)? scandouble(i,j): l;
 	}
@@ -1016,6 +1005,11 @@ public class LuaString extends LuaValue implements Char_source, java.io.Serializ
 		int bgn = neg?start+1:start;
 		if (neg && bgn == end) {
 			return Double.NaN;
+		}
+		// quick check for '0x'
+		if (bgn + 2 < end && m_bytes[bgn] == '0' && (m_bytes[bgn+1] | 32) == 'x') {
+			bgn += 2;
+			base = 16; // force to base 16
 		}
 
 		for ( int i=bgn; i<end; i++ ) {

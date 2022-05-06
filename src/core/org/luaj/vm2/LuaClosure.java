@@ -382,22 +382,22 @@ public class LuaClosure extends LuaFunction {
 						++pc;
 					continue;
 					
-				case Lua.OP_EQ_a: /*	A B C	if ((RK(B) == RK(C)) ~= A) then pc++		*/
+				case Lua.OP_EQ_a: /*	A B C	if ((K(B) == K(C)) ~= A) then pc++		*/
 					if ( k[i>>>23].eq_b(k[(i>>14)&0x1ff]) != (a!=0) ) 
 						++pc;
 					continue;
 					
-				case Lua.OP_EQ_b: /*	A B C	if ((RK(B) == RK(C)) ~= A) then pc++		*/
+				case Lua.OP_EQ_b: /*	A B C	if ((K(B) == R(C)) ~= A) then pc++		*/
 					if ( k[i>>>23].eq_b(stack[(i>>14)&0x1ff]) != (a!=0) ) 
 						++pc;
 					continue;
 					
-				case Lua.OP_EQ_c: /*	A B C	if ((RK(B) == RK(C)) ~= A) then pc++		*/
+				case Lua.OP_EQ_c: /*	A B C	if ((R(B) == K(C)) ~= A) then pc++		*/
 					if ( stack[i>>>23].eq_b(k[(i>>14)&0x1ff]) != (a!=0) ) 
 						++pc;
 					continue;
 					
-				case Lua.OP_EQ_d: /*	A B C	if ((RK(B) == RK(C)) ~= A) then pc++		*/
+				case Lua.OP_EQ_d: /*	A B C	if ((R(B) == R(C)) ~= A) then pc++		*/
 					if ( stack[i>>>23].eq_b(stack[(i>>14)&0x1ff]) != (a!=0) ) 
 						++pc;
 					continue;
