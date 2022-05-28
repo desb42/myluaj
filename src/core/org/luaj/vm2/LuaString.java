@@ -93,8 +93,20 @@ public class LuaString extends LuaValue implements Char_source, java.io.Serializ
 		}
 		return str;
 	}
+	public int Index_of(int find, int bgn) {
+		int src_bgn = m_offset + bgn;
+		int src_end = m_offset + m_length;
+		for (int i = src_bgn; i < src_end; i++) {
+			if ((m_bytes[i] & 0xFF) == find) 
+                            return i - m_offset;
+                }
+                return -1;
+        }
 	public int Index_of(Char_source find, int bgn) {
 		int find_len = find.Len_in_data();
+                if (find_len == 1) {
+                    return Index_of(find.Get_data(0), bgn);
+                }
 		int src_bgn = m_offset + bgn;
 		int src_end = m_offset + m_length;
 		for (int i = src_bgn; i < src_end; i++) {

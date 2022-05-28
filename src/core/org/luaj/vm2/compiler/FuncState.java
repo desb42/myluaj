@@ -1027,7 +1027,8 @@ public class FuncState extends LuaC {
 	private static LuaValue S_ENV = LuaString.valueOf("_ENV");
 	private static LuaValue S_type = LuaString.valueOf("type");
 	boolean checktype(int cond, expdesc e1, int typecode, int b) {
-		if ((this.f.code[this.pc - 1] & 0x3f) == OP_CALL) {
+            try {
+		if (this.f.code != null && (this.f.code[this.pc - 1] & 0x3f) == OP_CALL + 100) {
 			int i = this.f.code[this.pc - 3];
 			int aa, bb, cc;
 			//aa = ((i>>6) & 0xff);
@@ -1067,6 +1068,10 @@ public class FuncState extends LuaC {
 			e1.u.info = this.condjump(OP_TYPE, cond, b, typecode);
 			e1.k = LexState.VJMP;
 			return true;
+                }
+            }
+            catch (Exception e) {
+                    throw e;
                 }
 		return false;
 	}

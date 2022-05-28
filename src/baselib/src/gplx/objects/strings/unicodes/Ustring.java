@@ -42,6 +42,7 @@ class Ustring_single implements Ustring { // 1 char == 1 codepoint
 		}
 	}
 	public int Index_of(Char_source find, int bgn) {return src.indexOf(find.Src(), bgn);} 
+	public int Index_of(int find, int bgn) {return src.indexOf(find, bgn);} 
 	public boolean Eq(int lhs_bgn, Char_source rhs, int rhs_bgn, int rhs_end) {
 		if (src_len < lhs_bgn + rhs_end || rhs.Len_in_data() < rhs_bgn + rhs_end)
 			return false;
@@ -90,8 +91,8 @@ class Ustring_codepoints implements Ustring {
 		for (int i = bgn; i < end; i++) {
 			int code = codes[i];
 			if (code >= Ustring_.Surrogate_cp_bgn && code <= Ustring_.Surrogate_cp_end) {
-				rv[rv_idx++] = (char)((code - 0x10000) / 0x400 + 0xD800);
-				rv[rv_idx++] = (char)((code - 0x10000) % 0x400 + 0xDC00);
+				rv[rv_idx++] = (char)((code - Ustring_.Surrogate_cp_bgn) / 0x400 + Ustring_.Surrogate_hi_bgn);
+				rv[rv_idx++] = (char)((code - Ustring_.Surrogate_cp_bgn) % 0x400 + Ustring_.Surrogate_lo_bgn);
 			}
 			else {
 				rv[rv_idx++] = (char)code;
@@ -128,6 +129,14 @@ class Ustring_codepoints implements Ustring {
 		}
 		return -1;
 	}
+	public int Index_of(int find, int bgn) {
+		int codes_len = codes.length;
+		for (int i = bgn; i < codes_len; i++) {
+                    if (codes[i] == find)
+                        return i;
+                }
+            return -1;
+        }
 	public boolean Eq(int lhs_bgn, Char_source rhs, int rhs_bgn, int rhs_end) {
 		if (this.Len_in_data() < lhs_bgn + rhs_end || rhs.Len_in_data() < rhs_bgn + rhs_end)
 			return false;

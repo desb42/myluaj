@@ -54,8 +54,8 @@ public class Match_state {
                 if (src_len == 0) { //src_len == 32 && src.Get_data(0) == 'D') {
                     int a=1;
                 }
-                //^[a-zA-Z0-9]+$
-                if (pat_len == 14 && pat.Get_data( 0 ) == '^' && pat.Get_data( 1 ) == '[' && pat.Get_data( 2 ) == 'a') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
+                //^[%(%)%.%%%+%-%*%?%[%]%^%$]$
+                if (pat_len > 28 && pat.Get_data( 0 ) == '(' && pat.Get_data( 1 ) == ')' && pat.Get_data( 2 ) == '[') {//pat.Get_data( 3 ) == 'a') { //pat.equals("^(%a%a%a?)%-(%a%a%a%a)%-(%a%a)%-(%d%d%d%d)$")) {
                     int a=1;
                 }
 //                }
@@ -659,13 +659,16 @@ public class Match_state {
 					break;
 				}
 				default:
-					while (src_pos < src_len) {
+                                    src_pos = src.Index_of(first_char, src_pos);
+                                    if (src_pos < 0)
+                                        src_pos = src_len;
+/*					while (src_pos < src_len) {
 						if (src.Get_data(src_pos) == first_char) {
 							break;
 						}
 						else
 							src_pos++;
-					}
+					}*/
 					break;
 			}
 			this.stretch = src_pos;
@@ -683,6 +686,8 @@ public class Match_state {
 			if (pat_pos == pat_len)
 				return src_pos;
 			int pat_chr = pat.Get_data(pat_pos);
+                        if (src_pos < src_len)
+                        //System.out.println(Integer.toString(pat_pos) + ":" + Integer.toString(pat_chr) + ":" + Integer.toString(src_pos) + ":" + Integer.toString(src.Get_data(src_pos)));
 			if (++counter > maxcounter) { //150000) { //
 				throw new LuaError("catastrophic backtrack");
 			}

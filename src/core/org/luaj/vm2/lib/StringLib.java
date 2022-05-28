@@ -631,7 +631,7 @@ public class StringLib extends TwoArgFunction {
                 //}
 		LuaValue repl = args.arg( 3 );
 		int max_s = args.optint( 4, srclen + 1 );
-		final boolean anchor = p.length() > 0 && p.charAt( 0 ) == '^';
+		final int anchor = (p.length() > 0 && p.charAt( 0 ) == '^') ? 1 : 0;
 
 		// special case for ^%s*(.-)%s*$
 		if (p.length() == 12 && p.m_bytes[0] == '^' && p.m_bytes[1] == '%' && p.m_bytes[2] == 's' && p.m_bytes[3] == '*'
@@ -653,7 +653,7 @@ public class StringLib extends TwoArgFunction {
 //			ms_old.reset();
 			ms_new.reset();
 //			int res_old = ms_old.match( soffset, anchor ? 1 : 0 );
-			int res = ms_new.match( soffset, anchor ? 1 : 0 );
+			int res = ms_new.match( soffset, anchor );
 //			if (res_old != res) {
 //				System.out.println("oops");
 //			}
@@ -682,7 +682,7 @@ public class StringLib extends TwoArgFunction {
 			}
 			else
 				break;
-			if ( anchor )
+			if ( anchor != 0 )
 				break;
 		}
 		if (lbuf != null) {

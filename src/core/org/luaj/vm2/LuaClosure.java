@@ -205,10 +205,12 @@ public class LuaClosure extends LuaFunction {
 				
 				// process the op code
 				switch ( i & 0x3f ) {
-                                    case Lua.OP_TYPE:
-					if ( (stack[i>>>23].type() == ((i>>14)&0x1ff)) != (a!=0) ) 
+				case Lua.OP_TYPE: // 20220501 extra opcode!!
+                                    int t = stack[i>>>23].type();
+                                    stack[i>>>23] = LuaValue.valueOf(stack[i>>>23].typename());
+					if ( (t == ((i>>14)&0x1ff)) != (a!=0) ) 
 						++pc;
-                                        continue;
+					continue;
 				
 				case Lua.OP_MOVE:/*	A B	R(A):= R(B)					*/
 					stack[a] = stack[i>>>23];
@@ -579,6 +581,17 @@ public class LuaClosure extends LuaFunction {
 			if (le.traceback == null)
 				processErrorHooks(le, p, pc);
 			le.pstack += "\n" + p.toString();
+			i = code[pc-1];
+			le.pstack += " " + Integer.toString((i & 0x3f)) + " " + Integer.toString(((i>>6) & 0xff)) + " " + Integer.toString(i>>>23) + " " + Integer.toString((i>>14)&0x1ff);
+			switch (i & 0x3f) {
+			case Lua.OP_GETTABUP_a:
+			case Lua.OP_GETTABLE_a:
+			case Lua.OP_SETTABUP_a:
+			case Lua.OP_SETTABLE_a:
+			case Lua.OP_SELF_a:
+			case Lua.OP_EQ_a:
+				le.pstack += " " + k[(i>>14)&0x1ff];
+			}
 			throw le;
 		} catch ( Exception e ) {
 			LuaError le = new LuaError(e);

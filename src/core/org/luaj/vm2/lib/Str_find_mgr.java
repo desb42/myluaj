@@ -1,7 +1,6 @@
 package org.luaj.vm2.lib;
 
 import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.LuaString;
 import org.luaj.vm2.Varargs;
 import gplx.objects.strings.char_sources.*;
 
@@ -35,6 +34,27 @@ public abstract class Str_find_mgr {
 	protected abstract Varargs    Result__make__nil();
 	protected void                Result__make__bgn_end(int bgn, int end) {}
 	public abstract Str_char_class_mgr Char_class_mgr();
+	public static boolean Any_special(String src) {
+		int src_len = src.length();
+//		int ary_len = SPECIALS_ARY.length;
+		for (int i = 0; i < src_len; i++) {
+			switch (src.charAt(i)) {
+				case '^': case '[': case '%': case '(': case '*':
+				case '+': case '?': case '.': case '-': case '$':
+					return true;
+			}
+		}
+//			char c = src.charAt(i);
+//			if (c < 95) { // no special > '^'
+//				for (int j = 0; j < ary_len; j++) {
+//					if (String_.Char_at(src, i) == SPECIALS_ARY[j] ) {
+//						return true;
+//					}
+//				}
+//			}
+//		}
+		return false;
+	}
 	public Varargs Process(boolean adjust_base1) {
 		// adjust_base1 will be false when called by Scrib_pattern_matcher_xowa
 		if (adjust_base1) {
@@ -51,7 +71,8 @@ public abstract class Str_find_mgr {
 		}
 
 		// find mode and (plain or no special pattern characters)
-		if (find && (plain || Char_source_.Index_of_any(pat.Src(), SPECIALS_ARY) == Not_found)) {
+		//if (find && (plain || Char_source_.Index_of_any(pat.Src(), SPECIALS_ARY) == Not_found)) {
+		if (find && (plain || !Any_special(pat.Src()))) {
 			int result = src.Index_of(pat, src_bgn);
 			if (result != Not_found) {
 				return this.Result__make__plain(result + Base_1, result + pat_len);
@@ -74,7 +95,7 @@ public abstract class Str_find_mgr {
 				int res = ms.match(src_pos, pat_pos);
 				src_pos = ms.Stretch();
 				if (res != Not_found) {
-					Varargs r = null;
+					Varargs r;
 					if (find) {
 						ms.push_captures(false, src_pos, res);
 						r = this.Result__make__find(src_pos + Base_1, res);
@@ -90,8 +111,8 @@ public abstract class Str_find_mgr {
 		}
 		return this.Result__make__nil();
 	}
-	protected static final LuaString SPECIALS = LuaString.valueOf("^$*+?.([%-");
-	protected static final char[] SPECIALS_ARY = SPECIALS.tojstring().toCharArray();
+//	protected static final LuaString SPECIALS = LuaString.valueOf("^[%(*+?.-$"); // orig "^$*+?.([%-"
+//	protected static final char[] SPECIALS_ARY = SPECIALS.tojstring().toCharArray();
 	public static final int Base_1 = 1;
 	public static final int Not_found = -1;
 }
