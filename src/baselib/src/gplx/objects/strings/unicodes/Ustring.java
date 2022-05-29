@@ -110,7 +110,8 @@ class Ustring_codepoints implements Ustring {
 	}
 	public int Index_of(Char_source find, int bgn) {
 		int find_len = find.Len_in_data();
-		int codes_len = codes.length;
+                if (find_len == 1)
+                    return Index_of(find.Get_data(0), bgn);
 		for (int i = bgn; i < codes.length; i++) {
 			boolean found = true;
 			for (int j = 0; j < find_len; j++) {
@@ -130,13 +131,12 @@ class Ustring_codepoints implements Ustring {
 		return -1;
 	}
 	public int Index_of(int find, int bgn) {
-		int codes_len = codes.length;
 		for (int i = bgn; i < codes_len; i++) {
-                    if (codes[i] == find)
-                        return i;
-                }
-            return -1;
-        }
+		if (codes[i] == find)
+			return i;
+		}
+		return -1;
+	}
 	public boolean Eq(int lhs_bgn, Char_source rhs, int rhs_bgn, int rhs_end) {
 		if (this.Len_in_data() < lhs_bgn + rhs_end || rhs.Len_in_data() < rhs_bgn + rhs_end)
 			return false;
